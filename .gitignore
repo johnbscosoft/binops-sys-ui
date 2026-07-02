@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Angular build and cache output
+dist/
+.angular/
+
+# Local tooling and OS files
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Test output
+coverage/
