@@ -78,12 +78,20 @@
                                                     @if(f['email'].errors['required']){
                                                     <div>Email is required</div>
                                                     }
+                                                    @if(f['email'].errors['email']){
+                                                    <div>Enter a valid email</div>
+                                                    }
                                                 </div>
                                                 }
                                             </div>
 
+                                            @if (success) { <div class="alert alert-success">{{ success }}</div> }
+                                            @if (error) { <div class="alert alert-danger">{{ error }}</div> }
+
                                             <div class="text-center mt-4">
-                                                <button class="btn btn-success w-100" type="submit">Send Reset
+                                                <button class="btn btn-success w-100" type="submit" [disabled]="isLoading">
+                                                    @if (isLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                                    Send Reset
                                                     Link</button>
                                             </div>
                                         </form><!-- end form -->

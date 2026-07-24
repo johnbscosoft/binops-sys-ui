@@ -1,0 +1,16 @@
+.pricing-box {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.08);
+  }
+}
+
+.custom-plan-card {
+  background: linear-gradient(135deg, rgba(64, 81, 137, 0.1), rgba(10, 179, 156, 0.1));
+}
+
+.badge {
+  font-weight: 500;
+}

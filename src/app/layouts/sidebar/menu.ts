@@ -78,6 +78,8 @@ export const MENU: MenuItem[] = [
   menu(100, 'Administration', 'ri-settings-3-line', '/administration', [
     ['Users', 'users'],
     ['Roles & Permissions', 'roles-permissions'],
+    ['Company Settings', 'company-settings'],
+    ['Authentication Settings', 'authentication-settings'],
     ['System Settings', 'system-settings'],
     ['Audit Logs', 'audit-logs']
   ])

@@ -107,8 +107,8 @@ if (environment.defaultauth === 'firebase') {
           suffix: '.json'
         },
       },
-      { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+      { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: FakeBackendInterceptor, multi: true },
       provideHttpClient(withInterceptorsFromDi()),
     ]

@@ -1,0 +1,9 @@
+services:
+  ui:
+    image: ${IMAGE_NAME:-jbscosoft/wasteops-sys-ui}:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT:-8080}:80"
+    restart: unless-stopped

@@ -40,12 +40,15 @@
                                 <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
                                     <div class="mb-3">
-                                        <label for="username" class="form-label">Username</label>
-                                        <input type="text" class="form-control" id="username" placeholder="Enter username" formControlName="name" [ngClass]="{ 'is-invalid': submitted && f['name'].errors }">
-                                        @if (submitted && f['name'].errors) {
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" placeholder="Enter email" formControlName="email" [ngClass]="{ 'is-invalid': submitted && f['email'].errors }">
+                                        @if (submitted && f['email'].errors) {
                                         <div class="invalid-feedback" align="left">
-                                            @if(f['name'].errors['required']){
-                                            <div>Username is required</div>
+                                            @if(f['email'].errors['required']){
+                                            <div>Email is required</div>
+                                            }
+                                            @if(f['email'].errors['email']){
+                                            <div>Enter a valid email</div>
                                             }
                                         </div>
                                         }
@@ -75,8 +78,15 @@
                                         <label class="form-check-label" for="auth-remember-check">Remember me</label>
                                     </div>
 
+                                    @if (error) {
+                                    <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+                                    }
+
                                     <div class="mt-4">
-                                        <button class="btn btn-success w-100" type="submit">Sign In</button>
+                                        <button class="btn btn-success w-100" type="submit" [disabled]="isLoading">
+                                            @if (isLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                            Sign In
+                                        </button>
                                     </div>
 
                                     <div class="mt-4 text-center">

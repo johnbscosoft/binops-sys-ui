@@ -104,6 +104,7 @@ export class AuthenticationService {
         // return getFirebaseBackend()!.logout();
         sessionStorage.removeItem('currentUser');
         sessionStorage.removeItem('token');
+        sessionStorage.removeItem('refresh_token');
         this.currentUserSubject.next(null!);
 
         return of(undefined).pipe(

@@ -1,0 +1,271 @@
+<app-breadcrumbs title="Company Settings" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-4 mb-4">
+  <div>
+    <h4 class="fw-semibold fs-22 mb-1">Company Settings</h4>
+    <p class="text-muted mb-0">Manage company identity and primary contact information.</p>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="openCreate(companyModal)">
+    <i class="ri-add-line align-bottom me-1"></i>Add Company
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-header border-bottom-dashed">
+    <div class="row align-items-center g-3">
+      <div class="col-sm">
+        <h5 class="card-title mb-0">Companies</h5>
+      </div>
+      <div class="col-sm-auto">
+        <div class="search-box">
+          <input
+            type="search"
+            class="form-control"
+            name="companySearch"
+            placeholder="Search companies..."
+            [(ngModel)]="searchTerm">
+          <i class="ri-search-line search-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    @if (isLoading) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading companies...</span>
+        </div>
+        <p class="text-muted mt-3 mb-0">Loading companies...</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted">
+            <tr>
+              <th>Company</th>
+              <th>Company Code</th>
+              <th>Contact Person</th>
+              <th>Contact Details</th>
+              <th>Last Updated</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (company of filteredCompanies; track company.id) {
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-3 company-cell">
+                    <div class="company-logo bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0">
+                      @if (company.logo) {
+                        <img
+                          [src]="company.logo"
+                          [alt]="company.name + ' logo'"
+                          (error)="onCompanyLogoError($event)">
+                        <i class="ri-building-4-line fs-22 text-muted d-none"></i>
+                      } @else {
+                        <i class="ri-building-4-line fs-22 text-muted"></i>
+                      }
+                    </div>
+                    <div>
+                      <div class="fw-semibold">{{ company.name }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge bg-primary-subtle text-primary">{{ company.company_code }}</span></td>
+                <td>{{ company.contact_person }}</td>
+                <td>
+                  <a [href]="'mailto:' + company.email" class="d-block">{{ company.email }}</a>
+                  <a [href]="'tel:' + company.phone_number" class="text-muted">{{ company.phone_number }}</a>
+                </td>
+                <td>{{ company.updated_at | date:'medium' }}</td>
+                <td>
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-soft-primary" (click)="openEdit(company, companyModal)">
+                      <i class="ri-pencil-line me-1"></i>Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-soft-danger"
+                      [disabled]="deletingCompanyId === company.id"
+                      (click)="deleteCompany(company)">
+                      @if (deletingCompanyId === company.id) {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                      } @else {
+                        <i class="ri-delete-bin-line me-1"></i>
+                      }
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center py-5">
+                  <i class="ri-building-4-line display-5 text-muted"></i>
+                  <h5 class="mt-3">No companies found</h5>
+                  <p class="text-muted mb-0">
+                    {{ searchTerm ? 'Try a different search.' : 'Add the first company to get started.' }}
+                  </p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<ng-template #companyModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div>
+      <h5 class="modal-title mb-1">{{ editingCompany ? 'Edit Company' : 'Add Company' }}</h5>
+      @if (editingCompany) {
+        <span class="text-muted fs-12">Company code: {{ editingCompany.company_code }}</span>
+      } @else {
+        <span class="text-muted fs-12">The company code will be generated automatically.</span>
+      }
+    </div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+
+  <form #form="ngForm" (ngSubmit)="saveCompany()">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="company-name" class="form-label">Company Name <span class="text-danger">*</span></label>
+          <input
+            id="company-name"
+            name="companyName"
+            class="form-control"
+            [(ngModel)]="companyForm.name"
+            #nameControl="ngModel"
+            required
+            minlength="2"
+            maxlength="160"
+            [class.is-invalid]="nameControl.invalid && nameControl.touched">
+          @if (nameControl.invalid && nameControl.touched) {
+            <div class="invalid-feedback">Enter a company name of at least 2 characters.</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="company-email" class="form-label">Email <span class="text-danger">*</span></label>
+          <input
+            id="company-email"
+            name="companyEmail"
+            type="email"
+            class="form-control"
+            [(ngModel)]="companyForm.email"
+            #emailControl="ngModel"
+            required
+            email
+            [class.is-invalid]="emailControl.invalid && emailControl.touched">
+          @if (emailControl.invalid && emailControl.touched) {
+            <div class="invalid-feedback">Enter a valid email address.</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="company-phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+          <input
+            id="company-phone"
+            name="companyPhone"
+            type="tel"
+            class="form-control"
+            placeholder="0700000000"
+            [(ngModel)]="companyForm.phone_number"
+            #phoneControl="ngModel"
+            required
+            minlength="3"
+            maxlength="12"
+            [class.is-invalid]="phoneControl.invalid && phoneControl.touched">
+          @if (phoneControl.invalid && phoneControl.touched) {
+            <div class="invalid-feedback">Enter a phone number between 3 and 12 characters.</div>
+          }
+        </div>
+
+        <div class="col-12">
+          <label for="company-contact-person" class="form-label">Contact Person <span class="text-danger">*</span></label>
+          <input
+            id="company-contact-person"
+            name="companyContactPerson"
+            class="form-control"
+            [(ngModel)]="companyForm.contact_person"
+            #contactControl="ngModel"
+            required
+            minlength="2"
+            maxlength="160"
+            [class.is-invalid]="contactControl.invalid && contactControl.touched">
+          @if (contactControl.invalid && contactControl.touched) {
+            <div class="invalid-feedback">Enter a contact person of at least 2 characters.</div>
+          }
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Company Logo</label>
+          <input
+            #logoInput
+            id="company-logo"
+            name="companyLogo"
+            type="file"
+            class="form-control"
+            accept="image/png,image/jpeg,image/webp"
+            (change)="onLogoSelected($event)"
+            hidden>
+
+          <div
+            class="company-logo-dropzone"
+            [class.drag-active]="isLogoDragActive"
+            [class.has-error]="!!logoError"
+            role="button"
+            tabindex="0"
+            aria-label="Upload company logo"
+            (click)="logoInput.click()"
+            (keydown.enter)="logoInput.click()"
+            (keydown.space)="$event.preventDefault(); logoInput.click()"
+            (dragenter)="onLogoDragOver($event)"
+            (dragover)="onLogoDragOver($event)"
+            (dragleave)="onLogoDragLeave($event)"
+            (drop)="onLogoDropped($event)">
+            @if (logoPreview) {
+              <img class="dropzone-preview" [src]="logoPreview" alt="Selected company logo">
+              <div class="mt-3">
+                <div class="fw-semibold">{{ selectedLogoName || 'Current company logo' }}</div>
+                <p class="text-muted mb-0 fs-12">Drop another image or click to replace it</p>
+              </div>
+            } @else {
+              <div class="upload-icon mx-auto mb-3">
+                <i class="ri-upload-cloud-2-line"></i>
+              </div>
+              <h5 class="fs-15 mb-1">Drop the company logo here</h5>
+              <p class="text-muted mb-0">or click to browse</p>
+            }
+          </div>
+
+          <div class="form-text">PNG, JPEG, or WebP. Maximum size: 2 MB.</div>
+          @if (logoError) {
+            <div class="text-danger fs-12 mt-1">{{ logoError }}</div>
+          }
+
+          @if (logoPreview) {
+            <button type="button" class="btn btn-sm btn-soft-danger mt-2" (click)="removeLogo(logoInput)">
+              <i class="ri-delete-bin-line me-1"></i>Remove logo
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss('Cancel')">Cancel</button>
+      <button type="submit" class="btn btn-success" [disabled]="form.invalid || isSaving || !!logoError">
+        @if (isSaving) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        {{ editingCompany ? 'Update Company' : 'Add Company' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

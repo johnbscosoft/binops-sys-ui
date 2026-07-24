@@ -1,0 +1,176 @@
+<app-breadcrumbs title="Subscription Plans" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-4 mb-4">
+  <div>
+    <h4 class="fw-semibold fs-22 mb-1">Subscription Plans</h4>
+    <p class="text-muted mb-0">Manage service duration, pickup frequency, and pricing.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-primary" (click)="openCreate(planModal, true)">
+      <i class="ri-add-line align-bottom me-1"></i>Custom Plan
+    </button>
+    <button type="button" class="btn btn-primary" (click)="openCreate(planModal)">
+      <i class="ri-add-line align-bottom me-1"></i>New Plan
+    </button>
+  </div>
+</div>
+
+@if (isLoading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-3">Loading subscription plans...</p>
+  </div>
+} @else {
+  @if (plans.length) {
+    <div class="nav nav-pills plan-nav rounded mb-4 p-1 d-inline-flex">
+      @for (duration of durations; track duration) {
+        <button
+          type="button"
+          class="nav-link"
+          [class.active]="selectedDuration === duration"
+          (click)="selectDuration(duration)">
+          {{ duration }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="row g-4">
+    @for (plan of visiblePlans; track plan.id) {
+      <div class="col-xxl-4 col-lg-6">
+        <div class="card pricing-box h-100">
+          <div class="card-body bg-light m-2 p-4 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                @if (plan.is_custom) {
+                  <span class="badge bg-warning-subtle text-warning mb-2">Custom</span>
+                }
+                <h5 class="mb-1 fw-semibold">{{ plan.pickup_frequency }}</h5>
+                <p class="text-muted mb-0">{{ plan.duration }} subscription</p>
+              </div>
+              <span class="badge" [ngClass]="plan.is_active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
+                {{ plan.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <h2 class="mb-0">{{ formatAmount(plan.amount) }}</h2>
+              <small class="fs-13 text-muted">/{{ plan.duration }}</small>
+            </div>
+
+            <p class="text-muted flex-grow-1">{{ plan.notes || 'No notes provided.' }}</p>
+
+            <div class="d-flex flex-wrap gap-2 pt-3">
+              <button type="button" class="btn btn-sm btn-primary" (click)="openEdit(plan, planModal)">
+                <i class="ri-pencil-line me-1"></i>Edit
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleActive(plan)">
+                {{ plan.is_active ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger ms-auto" (click)="deletePlan(plan)">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="ri-calendar-check-line display-5 text-muted"></i>
+            <h5 class="mt-3">No subscription plans found</h5>
+            <p class="text-muted">Create the first plan to get started.</p>
+            <button type="button" class="btn btn-primary" (click)="openCreate(planModal)">Create Plan</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<ng-template #planModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <h5 class="modal-title">{{ editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+
+  <form #form="ngForm" (ngSubmit)="savePlan()">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <label for="plan-duration" class="form-label">Duration</label>
+          <input
+            id="plan-duration"
+            name="duration"
+            class="form-control"
+            placeholder="e.g. 1 Month"
+            [(ngModel)]="planForm.duration"
+            required
+            minlength="2"
+            maxlength="80">
+        </div>
+        <div class="col-lg-6">
+          <label for="plan-frequency" class="form-label">Pickup Frequency</label>
+          <input
+            id="plan-frequency"
+            name="pickupFrequency"
+            class="form-control"
+            placeholder="e.g. Once a Week"
+            [(ngModel)]="planForm.pickup_frequency"
+            required
+            minlength="2"
+            maxlength="80">
+        </div>
+        <div class="col-lg-6">
+          <label for="plan-amount" class="form-label">Amount</label>
+          <div class="input-group">
+            <span class="input-group-text">UGX</span>
+            <input
+              id="plan-amount"
+              name="amount"
+              type="number"
+              min="0"
+              class="form-control"
+              [(ngModel)]="planForm.amount"
+              required>
+          </div>
+        </div>
+        <div class="col-lg-3">
+          <label class="form-label d-block">Custom Plan</label>
+          <div class="form-check form-switch mt-2">
+            <input id="plan-custom" name="isCustom" class="form-check-input" type="checkbox" [(ngModel)]="planForm.is_custom">
+            <label class="form-check-label" for="plan-custom">Custom</label>
+          </div>
+        </div>
+        <div class="col-lg-3">
+          <label class="form-label d-block">Status</label>
+          <div class="form-check form-switch mt-2">
+            <input id="plan-active" name="isActive" class="form-check-input" type="checkbox" [(ngModel)]="planForm.is_active">
+            <label class="form-check-label" for="plan-active">Active</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <label for="plan-notes" class="form-label">Notes</label>
+          <textarea
+            id="plan-notes"
+            name="notes"
+            rows="3"
+            maxlength="500"
+            class="form-control"
+            placeholder="Optional notes"
+            [(ngModel)]="planForm.notes"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss('Cancel')">Cancel</button>
+      <button type="submit" class="btn btn-success" [disabled]="form.invalid || isSaving">
+        @if (isSaving) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        {{ editingPlan ? 'Update Plan' : 'Create Plan' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

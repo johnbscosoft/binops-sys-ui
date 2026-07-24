@@ -1,0 +1,78 @@
+.table th {
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
+.google-location-autocomplete,
+.google-location-autocomplete gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+}
+.customer-id-link {
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.detail-label {
+  margin-bottom: 0.35rem;
+  color: var(--vz-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail-value {
+  color: var(--vz-body-color);
+  font-weight: 500;
+}
+
+.customer-attachment-dropzone {
+  min-height: 190px;
+  padding: 24px;
+  border: 2px dashed var(--vz-border-color);
+  border-radius: 6px;
+  background: var(--vz-secondary-bg);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover,
+  &:focus-visible,
+  &.drag-active {
+    border-color: var(--vz-primary);
+    background: rgba(var(--vz-primary-rgb), 0.06);
+    outline: none;
+  }
+
+  &.has-error {
+    border-color: var(--vz-danger);
+  }
+
+  .upload-icon,
+  .attachment-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 28px;
+  }
+
+  .upload-icon {
+    color: var(--vz-primary);
+    background: rgba(var(--vz-primary-rgb), 0.1);
+  }
+
+  .attachment-icon {
+    color: var(--vz-danger);
+    background: rgba(var(--vz-danger-rgb), 0.1);
+  }
+}

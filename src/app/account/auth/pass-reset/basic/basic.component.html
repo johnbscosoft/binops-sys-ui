@@ -47,17 +47,26 @@
                                     <div class="mb-4">
                                         <label class="form-label">Email</label>
                                         <input type="email" class="form-control" id="email" placeholder="Enter Email" formControlName="email" [ngClass]="{ 'is-invalid': submitted && f['email'].errors }">
-                                        @if (submitted && f['password'].errors) {
+                                        @if (submitted && f['email'].errors) {
                                         <div class="invalid-feedback" align="left">
-                                            @if(f['password'].errors['required']){
+                                            @if(f['email'].errors['required']){
                                             <div>Email is required</div>
+                                            }
+                                            @if(f['email'].errors['email']){
+                                            <div>Enter a valid email</div>
                                             }
                                         </div>
                                         }
                                     </div>
 
+                                    @if (success) { <div class="alert alert-success">{{ success }}</div> }
+                                    @if (error) { <div class="alert alert-danger">{{ error }}</div> }
+
                                     <div class="text-center mt-4">
-                                        <button class="btn btn-success w-100" type="submit">Send Reset Link</button>
+                                        <button class="btn btn-success w-100" type="submit" [disabled]="isLoading">
+                                            @if (isLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                            Send Reset Link
+                                        </button>
                                     </div>
                                 </form><!-- end form -->
                             </div>
@@ -84,7 +93,7 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="text-center">
-                        <p class="mb-0 text-muted">&copy; <{{year}} Velzon. Crafted with <i class="mdi mdi-heart text-danger"></i> by Themesbrand</p>
+                        <p class="mb-0 text-muted">&copy; {{year}} Velzon. Crafted with <i class="mdi mdi-heart text-danger"></i> by Themesbrand</p>
                     </div>
                 </div>
             </div>

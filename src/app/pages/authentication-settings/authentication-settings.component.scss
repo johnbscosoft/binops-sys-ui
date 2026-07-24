@@ -1,0 +1,40 @@
+.setting-icon,
+.channel-icon {
+  align-items: center;
+  border-radius: 0.75rem;
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
+.setting-icon {
+  font-size: 1.5rem;
+  height: 3.5rem;
+  width: 3.5rem;
+}
+
+.channel-icon {
+  font-size: 1.25rem;
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.channel-card {
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  display: block;
+  height: 100%;
+  padding: 1.25rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.channel-card:hover {
+  border-color: var(--vz-primary);
+  box-shadow: 0 0.25rem 0.75rem rgba(64, 81, 137, 0.08);
+}
+
+.channel-disabled .channel-card {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

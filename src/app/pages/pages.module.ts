@@ -2,7 +2,7 @@ import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  NgbToastModule, NgbProgressbarModule
+  NgbToastModule, NgbProgressbarModule, NgbPaginationModule
 } from '@ng-bootstrap/ng-bootstrap';
 
 import { FlatpickrDirective } from 'angularx-flatpickr';
@@ -26,15 +26,22 @@ import { PagesRoutingModule } from "./pages-routing.module";
 import { SharedModule } from "../shared/shared.module";
 import { DashboardsModule } from "./dashboards/dashboards.module";
 import { AppsModule } from "./apps/apps.module";
+import { CustomersComponent } from './customers/customers.component';
+import { CompanySettingsComponent } from './company-settings/company-settings.component';
+import { SubscriptionsComponent } from './subscriptions/subscriptions.component';
+import { UsersComponent } from './users/users.component';
+import { ContractsComponent } from './contracts/contracts.component';
+import { AuthenticationSettingsComponent } from './authentication-settings/authentication-settings.component';
 
 
 @NgModule({
-  declarations: [],
+  declarations: [CustomersComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent],
   imports: [
     CommonModule,
     FormsModule,
     NgbToastModule,
     NgbProgressbarModule,
+    NgbPaginationModule,
     FlatpickrDirective,
     CountUpDirective,
     NgApexchartsModule,

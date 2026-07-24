@@ -3,6 +3,7 @@ import { HttpRequest, HttpResponse, HttpHandler, HttpEvent, HttpInterceptor, HTT
 import { Observable, of, throwError } from 'rxjs';
 import { delay, mergeMap, materialize, dematerialize } from 'rxjs/operators';
 import { Transactions, apikeys, application, cryptoOrders, deals, folderData, projectListWidgets, recentData, sellerDetail, sellerDetals, tasks } from '../data';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class FakeBackendInterceptor implements HttpInterceptor {
@@ -10,6 +11,13 @@ export class FakeBackendInterceptor implements HttpInterceptor {
     constructor() { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+        // WasteOps API requests must always reach the real backend. The Velzon
+        // demo interceptor also defines /users routes and would otherwise
+        // capture them before the JWT-authenticated API request is sent.
+        if (request.url.startsWith(environment.apiUrl)) {
+            return next.handle(request);
+        }
 
         // tslint:disable-next-line: max-line-length
         const users: any[] = JSON.parse(sessionStorage.getItem('users')!) || [{ username: 'admin', email: 'admin@themesbrand.com', password: '123456' }];

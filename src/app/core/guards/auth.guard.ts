@@ -5,16 +5,21 @@ import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/ro
 import { AuthenticationService } from '../services/auth.service';
 import { AuthfakeauthenticationService } from '../services/authfake.service';
 import { environment } from '../../../environments/environment';
+import { TokenStorageService } from '../services/token-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard  {
     constructor(
         private router: Router,
         private authenticationService: AuthenticationService,
-        private authFackservice: AuthfakeauthenticationService
+        private authFackservice: AuthfakeauthenticationService,
+        private tokenStorage: TokenStorageService
     ) { }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+        if (this.tokenStorage.getAccessToken()) {
+            return true;
+        }
         if (environment.defaultauth === 'firebase') {
             const currentUser = this.authenticationService.currentUser();
             if (currentUser) {
@@ -33,7 +38,7 @@ export class AuthGuard  {
             }
         }
         // not logged in so redirect to login page with the return url
-        this.router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
+        this.router.navigate(['/auth/signin/basic'], { queryParams: { returnUrl: state.url } });
         return false;
     }
 }

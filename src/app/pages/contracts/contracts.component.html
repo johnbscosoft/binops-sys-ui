@@ -1,0 +1,194 @@
+<app-breadcrumbs title="Customer Contracts" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header border-bottom-dashed">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <h5 class="card-title mb-1">Generated Contracts</h5>
+            <p class="text-muted mb-0">Generate, view, and print customer service contracts.</p>
+          </div>
+          <button type="button" class="btn btn-success" (click)="openGenerate(generateModal)">
+            <i class="ri-file-add-line align-bottom me-1"></i> Generate Contract
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-sm-7 col-lg-4">
+            <div class="search-box">
+              <input type="search" class="form-control" name="contractSearch"
+                placeholder="Search contract, customer, or code..."
+                [(ngModel)]="searchTerm" (ngModelChange)="searchContracts()">
+              <i class="ri-search-line search-icon"></i>
+            </div>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading contracts...</span>
+            </div>
+          </div>
+        } @else {
+          <div class="table-responsive table-card">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-muted">
+                <tr>
+                  <th>Contract ID</th>
+                  <th>Customer Name</th>
+                  <th>Customer Code</th>
+                  <th>Plan</th>
+                  <th>Expiry Date</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (contract of paginatedContracts; track contract.id) {
+                  <tr>
+                    <td class="fw-medium text-primary">{{ contract.contract_code }}</td>
+                    <td>{{ contract.customer_name }}</td>
+                    <td>{{ contract.customer_code }}</td>
+                    <td>
+                      <div class="fw-medium">{{ contract.plan_duration }}</div>
+                      <small class="text-muted">{{ contract.pickup_frequency }}</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-info-subtle text-info fs-12">
+                        {{ contract.expiry_date | date:'dd MMM yyyy' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-end flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-soft-primary"
+                          [disabled]="isLoadingPdf" (click)="viewPdf(pdfModal, contract)">
+                          <i class="ri-file-pdf-2-line me-1"></i>View PDF
+                        </button>
+                        <button type="button" class="btn btn-sm btn-soft-danger"
+                          (click)="deleteContract(contract)">
+                          <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center py-5">
+                      <div class="avatar-md mx-auto mb-3">
+                        <div class="avatar-title rounded-circle bg-primary-subtle text-primary fs-24">
+                          <i class="ri-file-list-3-line"></i>
+                        </div>
+                      </div>
+                      <h6 class="mb-1">No contracts found</h6>
+                      <p class="text-muted mb-0">Generate a contract to add it to this list.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (filteredContracts.length) {
+            <div class="row align-items-center mt-3 gy-2">
+              <div class="col-sm">
+                <div class="text-muted">
+                  Showing <span class="fw-semibold">{{ firstVisibleContract }}</span> to
+                  <span class="fw-semibold">{{ lastVisibleContract }}</span> of
+                  <span class="fw-semibold">{{ filteredContracts.length }}</span> contracts
+                </div>
+              </div>
+              <div class="col-sm-auto">
+                <ngb-pagination [collectionSize]="filteredContracts.length" [(page)]="page"
+                  [pageSize]="pageSize" [maxSize]="5" [boundaryLinks]="true" size="sm">
+                </ngb-pagination>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #generateModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div>
+      <h5 class="modal-title mb-1">Generate Customer Contract</h5>
+      <p class="text-muted mb-0">Select the customer whose contract you want to generate.</p>
+    </div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+  <form #contractForm="ngForm" (ngSubmit)="generateContract()">
+    <div class="modal-body">
+      <div class="mb-3">
+        <label for="contract-customer" class="form-label">Customer <span class="text-danger">*</span></label>
+        <select id="contract-customer" name="customer_id" class="form-select"
+          [(ngModel)]="selectedCustomerId" #customerControl="ngModel" required
+          [disabled]="isLoadingCustomers">
+          <option [ngValue]="null" disabled>
+            {{ isLoadingCustomers ? 'Loading customers...' : 'Select a customer' }}
+          </option>
+          @for (customer of customers; track customer.id) {
+            <option [ngValue]="customer.id" [disabled]="!customer.subscription_plan_id">
+              {{ customerCode(customer) }} — {{ customer.name }}{{ !customer.subscription_plan_id ? ' (No plan)' : '' }}
+            </option>
+          }
+        </select>
+        @if (customerControl.invalid && customerControl.touched) {
+          <div class="text-danger small mt-1">Select a customer.</div>
+        }
+        @if (!isLoadingCustomers && !customers.length) {
+          <div class="alert alert-warning mt-3 mb-0">
+            No active customers are available. Add or activate a customer first.
+          </div>
+        }
+      </div>
+
+      <div>
+        <label for="contract-start-date" class="form-label">Contract Start Date <span class="text-danger">*</span></label>
+        <input id="contract-start-date" name="start_date" type="date" class="form-control"
+          [(ngModel)]="startDate" #startDateControl="ngModel" required>
+        @if (startDateControl.invalid && startDateControl.touched) {
+          <div class="text-danger small mt-1">Select the contract start date.</div>
+        }
+        <div class="form-text">The expiry date is calculated automatically from the customer's subscription plan.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" [disabled]="isSaving" (click)="modal.dismiss('Cancel')">Cancel</button>
+      <button type="submit" class="btn btn-success"
+        [disabled]="contractForm.invalid || isSaving || isLoadingCustomers || !customers.length">
+        @if (isSaving) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Generating...
+        } @else {
+          <i class="ri-file-add-line align-bottom me-1"></i> Generate Contract
+        }
+      </button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #pdfModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div>
+      <h5 class="modal-title mb-1">Contract PDF</h5>
+      <span class="text-primary fw-medium">{{ selectedContract?.contract_code }}</span>
+      <span class="text-muted"> — {{ selectedContract?.customer_name }}</span>
+    </div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+  <div class="modal-body p-0 pdf-viewer-body">
+    @if (pdfUrl) {
+      <iframe #pdfFrame class="pdf-frame" [src]="pdfUrl" title="Customer contract PDF"></iframe>
+    }
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" (click)="modal.close('Close')">Close</button>
+    <button type="button" class="btn btn-primary" (click)="printPdf()">
+      <i class="ri-printer-line align-bottom me-1"></i> Print Contract
+    </button>
+  </div>
+</ng-template>

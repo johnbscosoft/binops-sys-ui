@@ -1,0 +1,378 @@
+<app-breadcrumbs title="Customers" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header border-bottom-dashed">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <h5 class="card-title mb-0">Customer List</h5>
+          <button type="button" class="btn btn-success" (click)="openAddCustomer(customerModal)">
+            <i class="ri-add-line align-bottom me-1"></i> Add Client
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-sm-6 col-lg-4">
+            <div class="search-box">
+              <input
+                type="search"
+                class="form-control"
+                name="customerSearch"
+                placeholder="Search customers..."
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="searchCustomers()">
+              <i class="ri-search-line search-icon"></i>
+            </div>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading customers...</span>
+            </div>
+          </div>
+        } @else {
+          <div class="table-responsive table-card">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-muted">
+                <tr>
+                  <th>Client ID</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (customer of paginatedCustomers; track customer.id) {
+                  <tr>
+                    <td>
+                      <button
+                        type="button"
+                        class="btn btn-link fw-medium p-0 customer-id-link"
+                        (click)="openCustomerDetails(customerDetailsModal, customer)">
+                        {{ customer.customer_id }}
+                      </button>
+                    </td>
+                    <td>{{ customer.name }}</td>
+                    <td>{{ customer.phone_no }}</td>
+                    <td>{{ customer.location }}</td>
+                    <td>
+                      <span
+                        class="badge text-uppercase"
+                        [ngClass]="customer.status === 'Active'
+                          ? 'bg-success-subtle text-success'
+                          : 'bg-secondary-subtle text-secondary'">
+                        {{ customer.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-end flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-soft-primary" (click)="openEditCustomer(customerModal, customer)">
+                          <i class="ri-pencil-line me-1"></i>Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-soft-danger" (click)="deleteCustomer(customer)">
+                          <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-soft-warning"
+                          [disabled]="customer.status === 'Inactive'"
+                          (click)="deactivateCustomer(customer)">
+                          <i class="ri-user-unfollow-line me-1"></i>Deactivate
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No customers found.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (filteredCustomers.length) {
+            <div class="row align-items-center mt-3 gy-2">
+              <div class="col-sm">
+                <div class="text-muted">
+                  Showing <span class="fw-semibold">{{ firstVisibleCustomer }}</span> to
+                  <span class="fw-semibold">{{ lastVisibleCustomer }}</span> of
+                  <span class="fw-semibold">{{ filteredCustomers.length }}</span> customers
+                </div>
+              </div>
+              <div class="col-sm-auto">
+                <ngb-pagination
+                  [collectionSize]="filteredCustomers.length"
+                  [(page)]="page"
+                  [pageSize]="pageSize"
+                  [maxSize]="5"
+                  [boundaryLinks]="true"
+                  size="sm">
+                </ngb-pagination>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #customerDetailsModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div>
+      <h5 class="modal-title mb-1">Customer Details</h5>
+      <span class="text-primary fw-medium">{{ selectedCustomer?.customer_id }}</span>
+    </div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+
+  @if (selectedCustomer; as customer) {
+    <div class="modal-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-lg">
+            <div class="avatar-title rounded-circle bg-primary-subtle text-primary fs-24">
+              <i class="ri-user-3-line"></i>
+            </div>
+          </div>
+          <div>
+            <h5 class="mb-1">{{ customer.name }}</h5>
+            <a [href]="'mailto:' + customer.email" class="text-muted">{{ customer.email }}</a>
+          </div>
+        </div>
+        <span
+          class="badge text-uppercase fs-12"
+          [ngClass]="customer.status === 'Active'
+            ? 'bg-success-subtle text-success'
+            : 'bg-secondary-subtle text-secondary'">
+          {{ customer.status }}
+        </span>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="detail-label">Client ID</div>
+          <div class="detail-value">{{ customer.customer_id }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Phone Number</div>
+          <a [href]="'tel:' + customer.phone_no" class="detail-value">{{ customer.phone_no }}</a>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Email Address</div>
+          <a [href]="'mailto:' + customer.email" class="detail-value text-break">{{ customer.email }}</a>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Subscription Plan</div>
+          <div class="detail-value">{{ selectedCustomerPlanLabel(customer) }}</div>
+        </div>
+        <div class="col-12">
+          <div class="detail-label">Location</div>
+          <div class="detail-value">{{ customer.location }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Flat Number</div>
+          <div class="detail-value">{{ customer.flat_no || '—' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">House Number</div>
+          <div class="detail-value">{{ customer.house_no || '—' }}</div>
+        </div>
+        @if (customer.latitude !== null && customer.longitude !== null) {
+          <div class="col-md-6">
+            <div class="detail-label">Latitude</div>
+            <div class="detail-value">{{ customer.latitude }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Longitude</div>
+            <div class="detail-value">{{ customer.longitude }}</div>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.close('Close')">Close</button>
+    </div>
+  }
+</ng-template>
+
+<ng-template #customerModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <h5 class="modal-title">{{ editingCustomer ? 'Edit Client Information' : 'Add New Client' }}</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+
+  <form #form="ngForm" (ngSubmit)="saveCustomer()">
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label for="customer-name" class="form-label">Name</label>
+          <input id="customer-name" name="name" type="text" class="form-control"
+            [(ngModel)]="customerForm.name" #nameControl="ngModel" required minlength="2"
+            [class.is-invalid]="nameControl.invalid && nameControl.touched">
+          @if (nameControl.invalid && nameControl.touched) {
+            <div class="invalid-feedback">
+              @if (nameControl.errors?.['required']) { Name is required. }
+              @else { Name must contain at least 2 characters. }
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-phone" class="form-label">Phone Number</label>
+          <input id="customer-phone" name="phone_no" type="tel" class="form-control"
+            [(ngModel)]="customerForm.phone_no" #phoneControl="ngModel" required
+            pattern="^07[0-9]{8}$" maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX"
+            [class.is-invalid]="phoneControl.invalid && phoneControl.touched">
+          @if (phoneControl.invalid && phoneControl.touched) {
+            <div class="invalid-feedback">
+              @if (phoneControl.errors?.['required']) { Phone number is required. }
+              @else { Enter 10 digits starting with 07, for example 0772123456. }
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-email" class="form-label">Email</label>
+          <input id="customer-email" name="email" type="email" class="form-control"
+            [(ngModel)]="customerForm.email" #emailControl="ngModel" email required
+            [class.is-invalid]="emailControl.invalid && emailControl.touched">
+          @if (emailControl.invalid && emailControl.touched) {
+            <div class="invalid-feedback">
+              @if (emailControl.errors?.['required']) { Email is required. }
+              @else { Enter a valid email address. }
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-location" class="form-label">Location</label>
+          @if (useGoogleLocations) {
+            <div id="customer-location" #locationAutocompleteContainer class="google-location-autocomplete"></div>
+            <input name="location" type="hidden" [(ngModel)]="customerForm.location" required>
+            @if (customerForm.location) {
+              <div class="form-text text-success">
+                <i class="ri-map-pin-line me-1"></i>{{ customerForm.location }}
+              </div>
+            }
+          } @else {
+            <input id="customer-location" name="location" type="text" class="form-control"
+              [(ngModel)]="customerForm.location" #locationControl="ngModel" required
+              [class.is-invalid]="locationControl.invalid && locationControl.touched">
+            @if (locationControl.invalid && locationControl.touched) {
+              <div class="invalid-feedback">Location is required.</div>
+            }
+            @if (!googleMapsApiKeyConfigured) {
+              <!-- <div class="form-text text-warning">
+                Configure googleMapsApiKey to enable Google location suggestions and coordinates.
+              </div> -->
+            }
+          }
+          @if (locationError) {
+            <div class="form-text text-danger">{{ locationError }}</div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-flat-number" class="form-label">Flat Number</label>
+          <input id="customer-flat-number" name="flat_no" type="text" class="form-control" [(ngModel)]="customerForm.flat_no">
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-house-number" class="form-label">House Number</label>
+          <input id="customer-house-number" name="house_no" type="text" class="form-control" [(ngModel)]="customerForm.house_no">
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-subscription-plan" class="form-label">Subscription Plan</label>
+          <select id="customer-subscription-plan" name="subscription_plan_id" class="form-select"
+            [(ngModel)]="customerForm.subscription_plan_id" #planControl="ngModel" required
+            [disabled]="subscriptionPlansLoading"
+            [class.is-invalid]="planControl.invalid && planControl.touched">
+            <option value="" disabled>
+              {{ subscriptionPlansLoading ? 'Loading subscription plans...' : 'Select a subscription plan' }}
+            </option>
+            @for (plan of subscriptionPlans; track plan.id) {
+              <option [value]="plan.id">
+                {{ subscriptionPlanLabel(plan) }}
+              </option>
+            }
+          </select>
+          @if (planControl.invalid && planControl.touched) {
+            <div class="invalid-feedback">Subscription plan is required.</div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-status" class="form-label">Status</label>
+          <select id="customer-status" name="status" class="form-select" [(ngModel)]="customerForm.status" required>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Attachment</label>
+          <input
+            #attachmentInput
+            id="customer-attachment"
+            name="attachment"
+            type="file"
+            class="form-control"
+            accept="application/pdf,.pdf"
+            (change)="onAttachmentSelected($event)"
+            hidden>
+
+          <div
+            class="customer-attachment-dropzone"
+            [class.drag-active]="isAttachmentDragActive"
+            [class.has-error]="!!attachmentError"
+            role="button"
+            tabindex="0"
+            aria-label="Upload customer PDF attachment"
+            (click)="attachmentInput.click()"
+            (keydown.enter)="attachmentInput.click()"
+            (keydown.space)="$event.preventDefault(); attachmentInput.click()"
+            (dragenter)="onAttachmentDragOver($event)"
+            (dragover)="onAttachmentDragOver($event)"
+            (dragleave)="onAttachmentDragLeave($event)"
+            (drop)="onAttachmentDropped($event)">
+            @if (selectedAttachment) {
+              <div class="attachment-icon mx-auto mb-3">
+                <i class="ri-file-pdf-2-line"></i>
+              </div>
+              <h5 class="fs-15 mb-1 text-break">{{ selectedAttachment.name }}</h5>
+              <p class="text-muted mb-0 fs-12">
+                {{ (selectedAttachment.size / 1024 / 1024) | number:'1.1-2' }} MB · Drop another PDF or click to replace
+              </p>
+            } @else {
+              <div class="upload-icon mx-auto mb-3">
+                <i class="ri-upload-cloud-2-line"></i>
+              </div>
+              <h5 class="fs-15 mb-1">Drop the customer attachment here</h5>
+              <p class="text-muted mb-0">or click to browse</p>
+            }
+          </div>
+
+          <div class="form-text">
+            Accepted format: PDF only. Maximum size: 5 MB.
+          </div>
+          @if (attachmentError) {
+            <div class="mt-2 text-danger">{{ attachmentError }}</div>
+          }
+          @if (selectedAttachment) {
+            <button type="button" class="btn btn-sm btn-soft-danger mt-2" (click)="removeAttachment(attachmentInput)">
+              <i class="ri-delete-bin-line me-1"></i>Remove attachment
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.close('Close')">Cancel</button>
+      <button type="submit" class="btn btn-success" [disabled]="form.invalid || isSaving">
+        @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

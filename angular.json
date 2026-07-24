@@ -124,6 +124,7 @@
               "outputHashing": "all",
               "optimization": {
                 "scripts": true,
+                "fonts": false,
                 "styles": {
                   "minify": true,
                   "inlineCritical": false

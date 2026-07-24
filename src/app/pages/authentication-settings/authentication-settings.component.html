@@ -1,0 +1,152 @@
+<app-breadcrumbs title="Authentication Settings" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="row justify-content-center">
+  <div class="col-xl-9">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-4 mb-4">
+      <div>
+        <h4 class="fw-semibold fs-22 mb-1">Authentication Settings</h4>
+        <p class="text-muted mb-0">Control how users verify their identity when signing in.</p>
+      </div>
+      <button type="button" class="btn btn-primary" [disabled]="isLoading || isSaving"
+        (click)="saveSettings()">
+        @if (isSaving) {
+          <span class="spinner-border spinner-border-sm me-1"></span> Saving...
+        } @else {
+          <i class="ri-save-line align-bottom me-1"></i> Save Settings
+        }
+      </button>
+    </div>
+
+    @if (isLoading) {
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading authentication settings...</span>
+          </div>
+          <p class="text-muted mt-3 mb-0">Loading authentication settings...</p>
+        </div>
+      </div>
+    } @else {
+      <div class="card">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start justify-content-between gap-4">
+            <div class="d-flex gap-3">
+              <div class="setting-icon bg-primary-subtle text-primary">
+                <i class="ri-shield-keyhole-line"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Two-Factor OTP Authentication</h5>
+                <p class="text-muted mb-0">
+                  Require a six-digit verification code after a valid email and password.
+                </p>
+              </div>
+            </div>
+            <div class="form-check form-switch form-switch-lg">
+              <input id="otp-enabled" name="otpEnabled" type="checkbox" class="form-check-input"
+                [(ngModel)]="form.otp_enabled">
+              <label class="form-check-label visually-hidden" for="otp-enabled">
+                Enable OTP authentication
+              </label>
+            </div>
+          </div>
+
+          <div class="alert mt-4 mb-0"
+            [ngClass]="form.otp_enabled ? 'alert-success' : 'alert-warning'">
+            <div class="d-flex align-items-center gap-2">
+              <i [class]="form.otp_enabled ? 'ri-lock-2-line' : 'ri-lock-unlock-line'"></i>
+              <span>
+                @if (form.otp_enabled) {
+                  OTP is enabled. Codes will be delivered through {{ selectedChannels }}.
+                } @else {
+                  OTP is disabled. Users will authenticate using their password only.
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" [class.channel-disabled]="!form.otp_enabled">
+        <div class="card-header border-bottom-dashed">
+          <h5 class="card-title mb-1">OTP Delivery Channels</h5>
+          <p class="text-muted mb-0">Choose where users receive their verification code.</p>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="channel-card" for="email-otp-enabled">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                  <div class="d-flex gap-3">
+                    <div class="channel-icon bg-info-subtle text-info">
+                      <i class="ri-mail-send-line"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1">Email OTP</h6>
+                      <p class="text-muted mb-2">Send the code to the user's registered email.</p>
+                      @if (settings?.email_delivery_configured) {
+                        <span class="badge bg-success-subtle text-success">SMTP configured</span>
+                      } @else if (settings?.development_mode) {
+                        <span class="badge bg-warning-subtle text-warning">Development mode</span>
+                      } @else {
+                        <span class="badge bg-danger-subtle text-danger">SMTP not configured</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input id="email-otp-enabled" name="emailOtpEnabled" type="checkbox"
+                      class="form-check-input" [(ngModel)]="form.email_otp_enabled"
+                      [disabled]="!form.otp_enabled">
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div class="col-md-6">
+              <label class="channel-card" for="sms-otp-enabled">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                  <div class="d-flex gap-3">
+                    <div class="channel-icon bg-success-subtle text-success">
+                      <i class="ri-message-2-line"></i>
+                    </div>
+                    <div>
+                      <h6 class="mb-1">SMS OTP</h6>
+                      <p class="text-muted mb-2">Send the code to the user's registered phone.</p>
+                      @if (settings?.sms_delivery_configured) {
+                        <span class="badge bg-success-subtle text-success">Twilio configured</span>
+                      } @else if (settings?.development_mode) {
+                        <span class="badge bg-warning-subtle text-warning">Development mode</span>
+                      } @else {
+                        <span class="badge bg-danger-subtle text-danger">Twilio not configured</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input id="sms-otp-enabled" name="smsOtpEnabled" type="checkbox"
+                      class="form-check-input" [(ngModel)]="form.sms_otp_enabled"
+                      [disabled]="!form.otp_enabled">
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          @if (form.otp_enabled && !form.email_otp_enabled && !form.sms_otp_enabled) {
+            <div class="alert alert-danger mt-3 mb-0">
+              Enable at least one delivery channel before saving.
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <div class="d-flex gap-2">
+          <i class="ri-information-line fs-18"></i>
+          <div>
+            Changes apply immediately to new login attempts. Existing authenticated sessions are
+            not revoked.
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
