@@ -9,10 +9,8 @@ Pull request
   → Build the production UI
   → Merge to main
   → Build and push an immutable Docker image
-  → Production approval
-  → SSH to the server
-  → Pull and recreate the UI container
-  → Verify container health
+  → Manually select a published UI tag
+  → Manually pull and recreate the UI container on the server
 ```
 
 The shared Docker Hub repository and UI tag prefix are:
@@ -33,33 +31,8 @@ Ensure the existing GitHub Actions secret `DOCKERHUB_TOKEN` has read/write
 access to it. The API uses `api-*` tags and the UI uses `ui-*` tags in this
 shared repository.
 
-Create a GitHub environment named `production`. Optionally add required
-reviewers so a person must approve each production deployment.
-
-Create these repository or `production` environment secrets:
-
-| Name | Purpose |
-| --- | --- |
-| `DEPLOY_HOST` | Production server hostname or IP |
-| `DEPLOY_USER` | Restricted Linux deployment user |
-| `DEPLOY_SSH_KEY` | Private SSH key for that user |
-| `DEPLOY_KNOWN_HOSTS` | Verified SSH host-key entry |
-| `DEPLOY_PORT` | Optional SSH port; defaults to `22` |
-
-Create this GitHub Actions variable:
-
-```text
-DEPLOY_PATH=/opt/binops-sys-ui
-```
-
-The workflow deploys production only for successful pushes or merges to `main`.
-The current repository branch is `master`; create and use `main` before expecting
-automatic production deployment:
-
-```bash
-git branch -M main
-git push -u origin main
-```
+No production SSH keys, server address, deployment user, or deployment path are
+required in GitHub. The workflow never connects to the production server.
 
 ## 2. Prepare the server
 
@@ -77,8 +50,6 @@ Create the shared private Docker network:
 ```bash
 docker network create binops_backend
 ```
-
-The SSH workflow also creates it when it does not exist.
 
 Attach the API container to that network:
 
