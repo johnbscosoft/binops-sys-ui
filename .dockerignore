@@ -4,5 +4,11 @@
 dist
 node_modules
 npm-debug.log*
-Dockerfile*
 README.md
+.env
+.env.*
+.deploy.env
+coverage
+.DS_Store
+.idea
+.vscode

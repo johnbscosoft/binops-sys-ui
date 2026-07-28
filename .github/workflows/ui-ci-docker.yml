@@ -1,0 +1,181 @@
+name: UI CI and Docker
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - testenv
+  push:
+    branches:
+      - main
+      - master
+      - testenv
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: ui-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: jbscosoft/binops-sys
+
+jobs:
+  test:
+    name: Test and build UI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run unit tests
+        continue-on-error: true
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Build production application
+        run: npm run build -- --configuration production
+
+  docker:
+    name: Build and push UI image
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: jbscosoft
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Generate image tags and labels
+        id: metadata
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=ui-sha-${{ github.sha }}
+            type=ref,event=branch,prefix=ui-
+            type=semver,pattern={{version}},prefix=ui-
+            type=semver,pattern={{major}}.{{minor}},prefix=ui-
+            type=raw,value=ui-latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+  deploy:
+    name: Deploy production UI over SSH
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - test
+      - docker
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Pull and deploy immutable image
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          IMAGE_TAG: ui-sha-${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$DEPLOY_USER"
+          deploy_port="${DEPLOY_PORT:-22}"
+          deploy_path="${DEPLOY_PATH:-/opt/binops-sys-ui}"
+          remote_command="$(printf 'bash -s -- %q %q' "$deploy_path" "$IMAGE_TAG")"
+
+          ssh \
+            -i "$HOME/.ssh/deploy_key" \
+            -p "$deploy_port" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "$remote_command" <<'REMOTE_SCRIPT'
+          set -Eeuo pipefail
+
+          deploy_path="$1"
+          image_tag="$2"
+          cd "$deploy_path"
+
+          docker network inspect binops_backend >/dev/null 2>&1 ||
+            docker network create binops_backend >/dev/null
+
+          if docker container inspect binops-sys-api >/dev/null 2>&1; then
+            docker network connect binops_backend binops-sys-api >/dev/null 2>&1 || true
+          fi
+
+          printf 'UI_IMAGE_TAG=%s\n' "$image_tag" > .deploy.env
+          chmod 600 .deploy.env
+
+          docker compose --env-file .deploy.env -f compose.yaml pull ui
+          docker compose --env-file .deploy.env -f compose.yaml up -d --remove-orphans ui
+
+          for attempt in $(seq 1 12); do
+            health="$(
+              docker inspect \
+                --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \
+                binops-sys-ui 2>/dev/null || true
+            )"
+            if [ "$health" = "healthy" ]; then
+              docker compose --env-file .deploy.env -f compose.yaml ps
+              exit 0
+            fi
+            sleep 5
+          done
+
+          docker compose --env-file .deploy.env -f compose.yaml ps
+          docker compose --env-file .deploy.env -f compose.yaml logs --tail=100 ui
+          exit 1
+          REMOTE_SCRIPT

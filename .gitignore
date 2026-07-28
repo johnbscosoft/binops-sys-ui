@@ -13,3 +13,4 @@ dist/
 
 # Test output
 coverage/
+.deploy.env
