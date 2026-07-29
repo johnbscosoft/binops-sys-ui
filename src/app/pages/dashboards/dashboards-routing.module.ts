@@ -9,6 +9,14 @@ const routes: Routes = [
     path: "crm",
     component: CrmComponent
   },
+  {
+    path: "dashboard/overview",
+    component: CrmComponent
+  },
+  {
+    path: "dashboard/key-metrics",
+    component: CrmComponent
+  },
 ];
 
 @NgModule({

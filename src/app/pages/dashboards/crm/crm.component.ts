@@ -1,441 +1,257 @@
 import { Component, OnInit } from '@angular/core';
-import { ClosingDeals, DealsStatus, UpcomingActivities, crmstatData } from 'src/app/core/data';
-import { DealTypeChart, salesForecastChart, splineAreaChart } from 'src/app/shared/chartColor';
 
+interface DashboardMetric {
+  label: string;
+  value: string;
+  change: string;
+  trend: 'up' | 'down';
+  helper: string;
+  icon: string;
+  tone: 'success' | 'primary' | 'warning' | 'danger';
+}
 
+interface CollectionRoute {
+  route: string;
+  area: string;
+  driver: string;
+  vehicle: string;
+  completedStops: number;
+  totalStops: number;
+  tonnage: number;
+  status: 'Completed' | 'In progress' | 'Delayed' | 'Not started';
+}
+
+interface OperationsAlert {
+  title: string;
+  detail: string;
+  time: string;
+  icon: string;
+  tone: 'danger' | 'warning' | 'info';
+}
 
 @Component({
-    selector: 'app-crm',
-    templateUrl: './crm.component.html',
-    styleUrls: ['./crm.component.scss'],
-    standalone: false
+  selector: 'app-crm',
+  templateUrl: './crm.component.html',
+  styleUrls: ['./crm.component.scss'],
+  standalone: false
 })
-
-/**
- * Crm Dashboard Component
- */
 export class CrmComponent implements OnInit {
+  breadCrumbItems: Array<{ label: string; active?: boolean }> = [];
 
-    // bread crumb items
-    breadCrumbItems!: Array<{}>;
-    statData!: any;
-    salesForecastChart: any;
-    DealTypeChart: any;
-    splineAreaChart: any;
-    DealsStatus: any;
-    UpcomingActivities: any;
-    ClosingDeals: any;
+  readonly snapshotLabel = 'Demo operational snapshot';
+  readonly reportingPeriod = '29 July 2026';
 
-    constructor() { }
-
-    ngOnInit(): void {
-        /**
-         * BreadCrumb
-         */
-        this.breadCrumbItems = [
-            { label: 'Dashboards' },
-            { label: 'CRM', active: true }
-        ];
-
-        /**
-         * Fetches the data
-         */
-        this.fetchData();
-
-        // Chart Color Data Get Function
-        this._salesForecastChart('["--vz-primary", "--vz-success", "--vz-warning"]');
-        this._DealTypeChart('["--vz-warning", "--vz-danger", "--vz-success"]');
-        this._splineAreaChart('["--vz-success", "--vz-danger"]');
-
+  readonly metrics: DashboardMetric[] = [
+    {
+      label: 'Waste collected today',
+      value: '48.6 t',
+      change: '12.4%',
+      trend: 'up',
+      helper: '5.4 t above yesterday',
+      icon: 'ri-scales-3-line',
+      tone: 'success'
+    },
+    {
+      label: 'Collection completion',
+      value: '87.5%',
+      change: '4.8%',
+      trend: 'up',
+      helper: '140 of 160 pickups',
+      icon: 'ri-checkbox-circle-line',
+      tone: 'primary'
+    },
+    {
+      label: 'Active routes',
+      value: '18 / 22',
+      change: '2 routes',
+      trend: 'up',
+      helper: '4 routes completed',
+      icon: 'ri-route-line',
+      tone: 'warning'
+    },
+    {
+      label: 'Missed or overdue',
+      value: '14',
+      change: '3.1%',
+      trend: 'down',
+      helper: '6 require dispatch action',
+      icon: 'ri-alarm-warning-line',
+      tone: 'danger'
     }
+  ];
 
-    // Chart Colors Set
-    private getChartColorsArray(colors: any) {
-        colors = JSON.parse(colors);
-        return colors.map(function (value: any) {
-            var newValue = value.replace(" ", "");
-            if (newValue.indexOf(",") === -1) {
-                var color = getComputedStyle(document.documentElement).getPropertyValue(newValue);
-                if (color) {
-                    color = color.replace(" ", "");
-                    return color;
-                }
-                else return newValue;;
-            } else {
-                var val = value.split(',');
-                if (val.length == 2) {
-                    var rgbaColor = getComputedStyle(document.documentElement).getPropertyValue(val[0]);
-                    rgbaColor = "rgba(" + rgbaColor + "," + val[1] + ")";
-                    return rgbaColor;
-                } else {
-                    return newValue;
-                }
+  readonly collectionTrendChart: any = {
+    series: [
+      { name: 'Collected', data: [39.2, 43.8, 41.6, 47.1, 45.4, 50.2, 48.6] },
+      { name: 'Target', data: [44, 44, 45, 46, 47, 49, 50] }
+    ],
+    chart: {
+      type: 'area',
+      height: 330,
+      toolbar: { show: false },
+      zoom: { enabled: false }
+    },
+    colors: ['#0ab39c', '#405189'],
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth', width: [3, 2], dashArray: [0, 5] },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.32,
+        opacityTo: 0.04,
+        stops: [0, 90, 100]
+      }
+    },
+    markers: { size: 0, hover: { sizeOffset: 4 } },
+    xaxis: {
+      categories: ['Wed 23', 'Thu 24', 'Fri 25', 'Sat 26', 'Sun 27', 'Mon 28', 'Tue 29'],
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      min: 0,
+      tickAmount: 5,
+      labels: { formatter: (value: number) => `${value.toFixed(0)} t` }
+    },
+    grid: { borderColor: '#e9ebec', strokeDashArray: 4 },
+    legend: { position: 'top', horizontalAlign: 'right' },
+    tooltip: { y: { formatter: (value: number) => `${value.toFixed(1)} tonnes` } }
+  };
+
+  readonly collectionStatusChart: any = {
+    series: [126, 18, 9, 7],
+    labels: ['Completed', 'In progress', 'Missed', 'Rescheduled'],
+    chart: { type: 'donut', height: 300 },
+    colors: ['#0ab39c', '#299cdb', '#f06548', '#f7b84b'],
+    dataLabels: { enabled: false },
+    legend: { position: 'bottom', horizontalAlign: 'center' },
+    stroke: { width: 0 },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '72%',
+          labels: {
+            show: true,
+            name: { show: true },
+            value: { show: true, fontSize: '24px', fontWeight: 600 },
+            total: {
+              show: true,
+              label: 'Scheduled',
+              formatter: () => '160'
             }
-        });
+          }
+        }
+      }
+    },
+    tooltip: { y: { formatter: (value: number) => `${value} pickups` } }
+  };
+
+  readonly routePerformanceChart: any = {
+    series: [{
+      name: 'Stops completed',
+      data: [96, 92, 88, 84, 76, 63]
+    }],
+    chart: { type: 'bar', height: 325, toolbar: { show: false } },
+    colors: ['#0ab39c'],
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        borderRadius: 5,
+        barHeight: '56%',
+        distributed: true
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: (value: number) => `${value}%`,
+      style: { colors: ['#fff'] }
+    },
+    xaxis: {
+      categories: ['Kampala Central', 'Nakawa East', 'Makindye South', 'Rubaga North', 'Kawempe West', 'Entebbe Road'],
+      max: 100,
+      labels: { formatter: (value: number) => `${value}%` }
+    },
+    grid: { borderColor: '#e9ebec', strokeDashArray: 4 },
+    legend: { show: false },
+    tooltip: { y: { formatter: (value: number) => `${value}% completed` } }
+  };
+
+  readonly wasteCompositionChart: any = {
+    series: [42, 24, 16, 8, 10],
+    labels: ['Organic', 'Plastic', 'Paper', 'Glass & metal', 'Other'],
+    chart: { type: 'donut', height: 305 },
+    colors: ['#0ab39c', '#299cdb', '#f7b84b', '#405189', '#878a99'],
+    dataLabels: { enabled: true, formatter: (value: number) => `${value.toFixed(0)}%` },
+    legend: { position: 'bottom' },
+    stroke: { width: 2, colors: ['var(--vz-card-bg)'] },
+    plotOptions: { pie: { donut: { size: '58%' } } },
+    tooltip: { y: { formatter: (value: number) => `${value}% of collected waste` } }
+  };
+
+  readonly routes: CollectionRoute[] = [
+    { route: 'RT-001', area: 'Kampala Central', driver: 'Moses Kato', vehicle: 'UBK 241D', completedStops: 24, totalStops: 25, tonnage: 7.8, status: 'In progress' },
+    { route: 'RT-004', area: 'Nakawa East', driver: 'Sarah Nambooze', vehicle: 'UBM 904Q', completedStops: 23, totalStops: 25, tonnage: 6.9, status: 'In progress' },
+    { route: 'RT-008', area: 'Makindye South', driver: 'David Ochieng', vehicle: 'UBH 118P', completedStops: 22, totalStops: 25, tonnage: 7.2, status: 'Completed' },
+    { route: 'RT-011', area: 'Rubaga North', driver: 'Peter Mugisha', vehicle: 'UBN 660A', completedStops: 21, totalStops: 25, tonnage: 6.4, status: 'In progress' },
+    { route: 'RT-016', area: 'Kawempe West', driver: 'Grace Namuli', vehicle: 'UBJ 528C', completedStops: 19, totalStops: 25, tonnage: 5.8, status: 'Delayed' },
+    { route: 'RT-021', area: 'Entebbe Road', driver: 'Ivan Ssekandi', vehicle: 'UBP 307E', completedStops: 0, totalStops: 18, tonnage: 0, status: 'Not started' }
+  ];
+
+  readonly alerts: OperationsAlert[] = [
+    {
+      title: 'Vehicle UBJ 528C reported a hydraulic fault',
+      detail: 'RT-016 · Kawempe West · replacement truck requested',
+      time: '12 min ago',
+      icon: 'ri-truck-line',
+      tone: 'danger'
+    },
+    {
+      title: 'Six overdue commercial pickups',
+      detail: 'Nakawa industrial area · dispatch review required',
+      time: '26 min ago',
+      icon: 'ri-timer-flash-line',
+      tone: 'warning'
+    },
+    {
+      title: 'Landfill queue is above 35 minutes',
+      detail: 'Kiteezi transfer point · routes RT-001 and RT-004 affected',
+      time: '41 min ago',
+      icon: 'ri-road-map-line',
+      tone: 'warning'
+    },
+    {
+      title: 'Adhoc hospital pickup approved',
+      detail: 'Muyenga Medical Centre · assigned to RT-008',
+      time: '1 hr ago',
+      icon: 'ri-add-circle-line',
+      tone: 'info'
+    }
+  ];
+
+  ngOnInit(): void {
+    this.breadCrumbItems = [
+      { label: 'Dashboard' },
+      { label: 'Waste Collection Overview', active: true }
+    ];
+  }
+
+  routeProgress(route: CollectionRoute): number {
+    if (!route.totalStops) {
+      return 0;
     }
 
-    /**
-   * Sales Forecast Charts
-   */
-    setforecastvalue(value: any) {
-        if (value == 'oct') {
-            this.salesForecastChart.series = [{
-                name: 'Goal',
-                data: [17]
-            }, {
-                name: 'Pending Forcast',
-                data: [6]
-            }, {
-                name: 'Revenue',
-                data: [37]
-            }]
-        }
-        if (value == 'nov') {
-            this.salesForecastChart.series = [{
-                name: 'Goal',
-                data: [37]
-            }, {
-                name: 'Pending Forcast',
-                data: [12]
-            }, {
-                name: 'Revenue',
-                data: [18]
-            }]
-        }
-        if (value == 'dec') {
-            this.salesForecastChart.series = [{
-                name: 'Goal',
-                data: [25]
-            }, {
-                name: 'Pending Forcast',
-                data: [20]
-            }, {
-                name: 'Revenue',
-                data: [27]
-            }]
-        }
-        if (value == 'jan') {
-            this.salesForecastChart.series = [{
-                name: 'Goal',
-                data: [7]
-            }, {
-                name: 'Pending Forcast',
-                data: [5]
-            }, {
-                name: 'Revenue',
-                data: [32]
-            }]
-        }
-    }
-    private _salesForecastChart(colors: any) {
-        colors = this.getChartColorsArray(colors);
-        this.salesForecastChart = {
-            series: [{
-                name: 'Goal',
-                data: [37]
-            }, {
-                name: 'Pending Forcast',
-                data: [12]
-            }, {
-                name: 'Revenue',
-                data: [18]
-            }],
-            chart: {
-                type: 'bar',
-                height: 350,
-                toolbar: {
-                    show: false,
-                },
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: false,
-                    columnWidth: '65%',
-                },
-            },
-            stroke: {
-                show: true,
-                width: 5,
-                colors: ['transparent']
-            },
-            xaxis: {
-                categories: [''],
-                axisTicks: {
-                    show: false,
-                    borderType: 'solid',
-                    color: '#78909C',
-                    height: 6,
-                    offsetX: 0,
-                    offsetY: 0
-                },
-                title: {
-                    text: 'Forecasted',
-                    offsetX: 0,
-                    offsetY: -45,
-                    style: {
-                        color: '#78909C',
-                        fontSize: '12px',
-                        fontWeight: 400,
-                    },
-                },
-            },
-            yaxis: {
-                labels: {
-                    formatter: function (value: any) {
-                        return "$" + value + "k";
-                    }
-                },
-                tickAmount: 4,
-                min: 0
-            },
-            fill: {
-                opacity: 1
-            },
-            legend: {
-                show: true,
-                position: 'bottom',
-                horizontalAlign: 'center',
-                fontWeight: 500,
-                offsetX: 0,
-                offsetY: -14,
-                itemMargin: {
-                    horizontal: 8,
-                    vertical: 0
-                },
-                markers: {
-                    width: 10,
-                    height: 10,
-                }
-            },
-            colors: colors
-        };
-        const attributeToMonitor = 'data-theme';
+    return Math.round((route.completedStops / route.totalStops) * 100);
+  }
 
-        const observer = new MutationObserver(() => {
-            const currentTheme = document.documentElement.getAttribute(attributeToMonitor);
-            this._salesForecastChart(salesForecastChart(currentTheme));
-        });
+  statusClass(status: CollectionRoute['status']): string {
+    const classes: Record<CollectionRoute['status'], string> = {
+      Completed: 'bg-success-subtle text-success',
+      'In progress': 'bg-info-subtle text-info',
+      Delayed: 'bg-warning-subtle text-warning',
+      'Not started': 'bg-secondary-subtle text-secondary'
+    };
 
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: [attributeToMonitor]
-        });
-    }
-
-    /**
-   * Deal Type Chart
-   */
-    setdealvalue(value: any) {
-        if (value == 'today') {
-            this.DealTypeChart.series = [{
-                name: 'Series 1',
-                data: [80, 50, 30, 40, 100, 20],
-            },
-            {
-                name: 'Series 2',
-                data: [20, 30, 40, 80, 20, 80],
-            },
-            {
-                name: 'Series 3',
-                data: [44, 76, 78, 13, 43, 10],
-            }]
-        }
-        if (value == 'weekly') {
-            this.DealTypeChart.series = [{
-                name: 'Series 1',
-                data: [90, 40, 40, 20, 80, 50],
-            },
-            {
-                name: 'Series 2',
-                data: [50, 20, 30, 70, 30, 80],
-            },
-            {
-                name: 'Series 3',
-                data: [54, 76, 78, 23, 43, 50],
-            }]
-        }
-        if (value == 'monthly') {
-            this.DealTypeChart.series = [{
-                name: 'Series 1',
-                data: [20, 50, 30, 50, 100, 80],
-            },
-            {
-                name: 'Series 2',
-                data: [80, 30, 70, 50, 30, 50],
-            },
-            {
-                name: 'Series 3',
-                data: [44, 56, 78, 53, 43, 10],
-            }]
-        }
-        if (value == 'yearly') {
-            this.DealTypeChart.series = [{
-                name: 'Series 1',
-                data: [20, 50, 90, 40, 100, 20],
-            },
-            {
-                name: 'Series 2',
-                data: [50, 80, 40, 40, 10, 60],
-            },
-            {
-                name: 'Series 3',
-                data: [34, 96, 58, 23, 33, 40],
-            }]
-        }
-    }
-
-    private _DealTypeChart(colors: any) {
-        colors = this.getChartColorsArray(colors);
-        this.DealTypeChart = {
-            series: [{
-                name: 'Series 1',
-                data: [80, 50, 30, 40, 100, 20],
-            },
-            {
-                name: 'Series 2',
-                data: [20, 30, 40, 80, 20, 80],
-            },
-            {
-                name: 'Series 3',
-                data: [44, 76, 78, 13, 43, 10],
-            }
-            ],
-            chart: {
-                height: 350,
-                type: 'radar',
-                dropShadow: {
-                    enabled: true, blur: 1, left: 1, top: 1
-                },
-                toolbar: {
-                    show: false
-                },
-            },
-            stroke: {
-                width: 2
-            },
-            fill: {
-                opacity: 0.2
-            },
-            markers: {
-                size: 0
-            },
-            colors: colors,
-            xaxis: {
-                categories: ['2014', '2015', '2016', '2017', '2018', '2019']
-            }
-        };
-        const attributeToMonitor = 'data-theme';
-
-        const observer = new MutationObserver(() => {
-            const currentTheme = document.documentElement.getAttribute(attributeToMonitor);
-            this._DealTypeChart(DealTypeChart(currentTheme));
-        });
-
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: [attributeToMonitor]
-        });
-    }
-
-    /**
-   * Splie-Area Chart
-   */
-    setbalancevalue(value: any) {
-        if (value == 'today') {
-            this.splineAreaChart.series = [{
-                name: 'Revenue',
-                data: [20, 25, 30, 35, 40, 55, 70, 110, 150, 180, 210, 250]
-            }, {
-                name: 'Expenses',
-                data: [12, 17, 45, 42, 24, 35, 42, 75, 102, 108, 156, 199]
-            }]
-        }
-        if (value == 'last_week') {
-            this.splineAreaChart.series = [{
-                name: 'Revenue',
-                data: [30, 35, 40, 45, 20, 45, 20, 100, 120, 150, 190, 220]
-            }, {
-                name: 'Expenses',
-                data: [12, 17, 45, 52, 24, 35, 42, 75, 92, 108, 146, 199]
-            }]
-        }
-        if (value == 'last_month') {
-            this.splineAreaChart.series = [{
-                name: 'Revenue',
-                data: [20, 45, 30, 35, 40, 55, 20, 110, 100, 190, 210, 250]
-            }, {
-                name: 'Expenses',
-                data: [62, 25, 45, 45, 24, 35, 42, 75, 102, 108, 150, 299]
-            }]
-        }
-        if (value == 'current_year') {
-            this.splineAreaChart.series = [{
-                name: 'Revenue',
-                data: [27, 25, 30, 75, 70, 55, 50, 120, 250, 180, 210, 250]
-            }, {
-                name: 'Expenses',
-                data: [12, 17, 45, 42, 24, 35, 42, 75, 102, 108, 156, 199]
-            }]
-        }
-    }
-
-    private _splineAreaChart(colors: any) {
-        colors = this.getChartColorsArray(colors);
-        this.splineAreaChart = {
-            series: [{
-                name: 'Revenue',
-                data: [20, 25, 30, 35, 40, 55, 70, 110, 150, 180, 210, 250]
-            }, {
-                name: 'Expenses',
-                data: [12, 17, 45, 42, 24, 35, 42, 75, 102, 108, 156, 199]
-            }],
-            chart: {
-                height: 290,
-                type: 'area',
-                toolbar: 'false',
-            },
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 2,
-            },
-            xaxis: {
-                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            },
-            yaxis: {
-                tickAmount: 5,
-                min: 0,
-                max: 260
-            },
-            colors: colors,
-            fill: {
-                opacity: 0.06,
-                type: 'solid'
-            }
-        };
-        const attributeToMonitor = 'data-theme';
-
-        const observer = new MutationObserver(() => {
-            const currentTheme = document.documentElement.getAttribute(attributeToMonitor);
-            this._splineAreaChart(splineAreaChart(currentTheme));
-        });
-
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: [attributeToMonitor]
-        });
-    }
-
-    /**
-     * Fetches the data
-     */
-    private fetchData() {
-        this.statData = crmstatData;
-        this.DealsStatus = DealsStatus;
-        this.UpcomingActivities = UpcomingActivities;
-        this.ClosingDeals = ClosingDeals;
-    }
-
+    return classes[status];
+  }
 }

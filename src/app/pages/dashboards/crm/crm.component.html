@@ -1,340 +1,276 @@
-<!-- Start Breadcrumbs -->
-<app-breadcrumbs title="CRM" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
-<!-- End Breadcrumbs -->
+<app-breadcrumbs
+  title="Waste Collection Dashboard"
+  [breadcrumbItems]="breadCrumbItems">
+</app-breadcrumbs>
 
+<section class="operations-hero mb-4">
+  <div class="hero-copy">
+    <span class="eyebrow">Operations command centre</span>
+    <h2>Today’s collection performance</h2>
+    <p>
+      Monitor pickups, route progress, collected tonnage and service exceptions
+      across the waste collection network.
+    </p>
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+      <span class="badge rounded-pill bg-white text-success">
+        <i class="ri-circle-fill align-middle me-1 live-dot"></i>
+        Operations active
+      </span>
+      <span class="badge rounded-pill hero-badge">
+        <i class="ri-flask-line align-middle me-1"></i>
+        {{ snapshotLabel }}
+      </span>
+    </div>
+  </div>
 
-<div class="row">
-    <div class="col-xl-12">
-        <div class="card crm-widget">
-            <div class="card-body p-0">
-                <div class="row row-cols-xxl-5 row-cols-md-3 row-cols-1 g-0">
-                    @for ( stat of statData; track $index) {
-                    <div>
-                        <app-crm-stat [title]="stat.title" [value]="stat.value" [icon]="stat.icon" [profit]="stat.profit" [sign]="stat.sign" [percentage]="stat.percentage"></app-crm-stat>
-                    </div>
-                    }
-                </div><!-- end row -->
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
-</div><!-- end row -->
+  <div class="hero-summary">
+    <div>
+      <span>Reporting date</span>
+      <strong>{{ reportingPeriod }}</strong>
+    </div>
+    <div>
+      <span>Last refreshed</span>
+      <strong>07:29 EAT</strong>
+    </div>
+  </div>
+</section>
 
-<div class="row">
-    <div class="col-xxl-3 col-md-6">
-        <div class="card">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Sales Forecast</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Nov
-                                2021<i class="mdi mdi-chevron-down ms-1"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setforecastvalue('oct')">Oct
-                                2021</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setforecastvalue('nov')">Nov
-                                2021</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setforecastvalue('dec')">Dec
-                                2021</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setforecastvalue('jan')">Jan
-                                2022</a>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end card header -->
-            <div class="card-body pb-0">
-                <div class="mb-n3">
-                    <apx-chart [series]="salesForecastChart.series" [chart]="salesForecastChart.chart" [colors]="salesForecastChart.colors" [dataLabels]="salesForecastChart.dataLabels" [plotOptions]="salesForecastChart.plotOptions" [yaxis]="salesForecastChart.yaxis" [legend]="salesForecastChart.legend" [fill]="salesForecastChart.fill" [stroke]="salesForecastChart.stroke" [tooltip]="salesForecastChart.tooltip" [xaxis]="salesForecastChart.xaxis" dir="ltr"></apx-chart>
-                </div>
+<div class="row g-3 mb-4">
+  @for (metric of metrics; track metric.label) {
+    <div class="col-xl-3 col-md-6">
+      <article class="card metric-card h-100 mb-0">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between gap-3">
+            <div>
+              <p class="metric-label mb-2">{{ metric.label }}</p>
+              <h3 class="metric-value mb-2">{{ metric.value }}</h3>
             </div>
-        </div><!-- end card -->
-    </div><!-- end col -->
+            <span class="metric-icon bg-{{ metric.tone }}-subtle text-{{ metric.tone }}">
+              <i [class]="metric.icon"></i>
+            </span>
+          </div>
 
-    <div class="col-xxl-3 col-md-6">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Deal Type</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Monthly<i class="mdi mdi-chevron-down ms-1"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setdealvalue('today')">Today</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setdealvalue('weekly')">Weekly</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setdealvalue('monthly')">Monthly</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setdealvalue('yearly')">Yearly</a>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end card header -->
-            <div class="card-body pb-0">
-                <div class="mb-n3">
-                    <apx-chart [series]="DealTypeChart.series" [chart]="DealTypeChart.chart" [stroke]="DealTypeChart.stroke" [fill]="DealTypeChart.fill" [markers]="DealTypeChart.markers" [colors]="DealTypeChart.colors" [xaxis]="DealTypeChart.xaxis" dir="ltr"></apx-chart>
-                </div>
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
+          <div class="d-flex align-items-center gap-2">
+            <span
+              class="metric-change"
+              [class.text-success]="metric.trend === 'up'"
+              [class.text-danger]="metric.trend === 'down'">
+              <i
+                [class]="metric.trend === 'up'
+                  ? 'ri-arrow-up-line'
+                  : 'ri-arrow-down-line'">
+              </i>
+              {{ metric.change }}
+            </span>
+            <span class="text-muted fs-12">{{ metric.helper }}</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  }
+</div>
 
-    <div class="col-xxl-6">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Balance Overview</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Current Year<i class="mdi mdi-chevron-down ms-1"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setbalancevalue('today')">Today</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setbalancevalue('last_week')">Last Week</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setbalancevalue('last_month')">Last Month</a>
-                            <a class="dropdown-item" href="javascript:void(0);" (click)="setbalancevalue('current_year')">Current Year</a>
-                        </div>
+<div class="row g-3 mb-4">
+  <div class="col-xxl-8">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Tonnage</span>
+          <h4 class="card-title mb-1">Seven-day collection trend</h4>
+          <p class="text-muted mb-0">Actual waste collected compared with the daily target.</p>
+        </div>
+        <span class="badge bg-success-subtle text-success">319.5 t collected</span>
+      </div>
+      <div class="card-body pt-2">
+        <apx-chart
+          [series]="collectionTrendChart.series"
+          [chart]="collectionTrendChart.chart"
+          [colors]="collectionTrendChart.colors"
+          [dataLabels]="collectionTrendChart.dataLabels"
+          [stroke]="collectionTrendChart.stroke"
+          [fill]="collectionTrendChart.fill"
+          [markers]="collectionTrendChart.markers"
+          [xaxis]="collectionTrendChart.xaxis"
+          [yaxis]="collectionTrendChart.yaxis"
+          [grid]="collectionTrendChart.grid"
+          [legend]="collectionTrendChart.legend"
+          [tooltip]="collectionTrendChart.tooltip">
+        </apx-chart>
+      </div>
+    </article>
+  </div>
+
+  <div class="col-xxl-4">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Today</span>
+          <h4 class="card-title mb-1">Pickup status</h4>
+          <p class="text-muted mb-0">Progress across all scheduled collections.</p>
+        </div>
+      </div>
+      <div class="card-body pt-0">
+        <apx-chart
+          [series]="collectionStatusChart.series"
+          [chart]="collectionStatusChart.chart"
+          [labels]="collectionStatusChart.labels"
+          [colors]="collectionStatusChart.colors"
+          [dataLabels]="collectionStatusChart.dataLabels"
+          [legend]="collectionStatusChart.legend"
+          [stroke]="collectionStatusChart.stroke"
+          [plotOptions]="collectionStatusChart.plotOptions"
+          [tooltip]="collectionStatusChart.tooltip">
+        </apx-chart>
+      </div>
+    </article>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-xl-7">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Live dispatch</span>
+          <h4 class="card-title mb-1">Collection route activity</h4>
+          <p class="text-muted mb-0">Current progress for priority routes and crews.</p>
+        </div>
+        <span class="badge bg-primary-subtle text-primary">18 routes active</span>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 route-table">
+            <thead class="table-light">
+              <tr>
+                <th>Route and area</th>
+                <th>Crew</th>
+                <th>Stops</th>
+                <th>Collected</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (route of routes; track route.route) {
+                <tr>
+                  <td>
+                    <div class="fw-semibold text-body">{{ route.route }}</div>
+                    <span class="text-muted fs-12">{{ route.area }}</span>
+                  </td>
+                  <td>
+                    <div>{{ route.driver }}</div>
+                    <span class="text-muted fs-12">{{ route.vehicle }}</span>
+                  </td>
+                  <td class="route-progress-cell">
+                    <div class="d-flex justify-content-between fs-12 mb-1">
+                      <span>{{ route.completedStops }}/{{ route.totalStops }}</span>
+                      <span class="text-muted">{{ routeProgress(route) }}%</span>
                     </div>
+                    <div class="progress progress-sm">
+                      <div
+                        class="progress-bar"
+                        [class.bg-warning]="route.status === 'Delayed'"
+                        [class.bg-secondary]="route.status === 'Not started'"
+                        [style.width.%]="routeProgress(route)">
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ route.tonnage | number:'1.1-1' }} t</td>
+                  <td>
+                    <span class="badge" [ngClass]="statusClass(route.status)">
+                      {{ route.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="col-xl-5">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Attention needed</span>
+          <h4 class="card-title mb-1">Operations alerts</h4>
+          <p class="text-muted mb-0">Exceptions affecting today’s service delivery.</p>
+        </div>
+        <span class="alert-count">4</span>
+      </div>
+
+      <div class="card-body">
+        <div class="alert-list">
+          @for (alert of alerts; track alert.title) {
+            <div class="operation-alert">
+              <span class="alert-icon bg-{{ alert.tone }}-subtle text-{{ alert.tone }}">
+                <i [class]="alert.icon"></i>
+              </span>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between gap-3">
+                  <h6 class="mb-1">{{ alert.title }}</h6>
+                  <span class="text-muted text-nowrap fs-11">{{ alert.time }}</span>
                 </div>
-            </div><!-- end card header -->
-            <div class="card-body px-0">
-                <ul class="list-inline main-chart text-center mb-0">
-                    <li class="list-inline-item chart-border-left me-0 border-0">
-                        <h4 class="text-primary">$584k <span class="text-muted d-inline-block fs-13 align-middle ms-2">Revenue</span></h4>
-                    </li>
-                    <li class="list-inline-item chart-border-left me-0">
-                        <h4>$497k<span class="text-muted d-inline-block fs-13 align-middle ms-2">Expenses</span>
-                        </h4>
-                    </li>
-                    <li class="list-inline-item chart-border-left me-0">
-                        <h4><span data-plugin="counterup">3.6</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Profit Ratio</span></h4>
-                    </li>
-                </ul>
-                <div class="mb-n3">
-                    <apx-chart [series]="splineAreaChart.series" [chart]="splineAreaChart.chart" [dataLabels]="splineAreaChart.dataLabels" [stroke]="splineAreaChart.stroke" [xaxis]="splineAreaChart.xaxis" [yaxis]="splineAreaChart.yaxis" [colors]="splineAreaChart.colors" [fill]="splineAreaChart.fill" dir="ltr"></apx-chart>
-                </div>
+                <p class="text-muted fs-12 mb-0">{{ alert.detail }}</p>
+              </div>
             </div>
-        </div><!-- end card -->
-    </div><!-- end col -->
-</div><!-- end row -->
+          }
+        </div>
+      </div>
+    </article>
+  </div>
+</div>
 
-<div class="row">
-    <div class="col-xl-7">
-        <div class="card">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Deals Status</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="text-muted">02 Nov 2021 to 31 Dec 2021<i class="mdi mdi-chevron-down ms-1"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);">Today</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Last Week</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Current Year</a>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end card header -->
+<div class="row g-3">
+  <div class="col-xl-7">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Service quality</span>
+          <h4 class="card-title mb-1">Route completion performance</h4>
+          <p class="text-muted mb-0">Percentage of planned stops completed by service area.</p>
+        </div>
+      </div>
+      <div class="card-body pt-1">
+        <apx-chart
+          [series]="routePerformanceChart.series"
+          [chart]="routePerformanceChart.chart"
+          [colors]="routePerformanceChart.colors"
+          [plotOptions]="routePerformanceChart.plotOptions"
+          [dataLabels]="routePerformanceChart.dataLabels"
+          [xaxis]="routePerformanceChart.xaxis"
+          [grid]="routePerformanceChart.grid"
+          [legend]="routePerformanceChart.legend"
+          [tooltip]="routePerformanceChart.tooltip">
+        </apx-chart>
+      </div>
+    </article>
+  </div>
 
-            <div class="card-body">
-                <div class="table-responsive table-card">
-                    <app-deals-status [DealsStatus]="DealsStatus"></app-deals-status>
-                </div><!-- end table responsive -->
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
-
-    <div class="col-xl-5">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">My Tasks</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="text-muted"><i class="ri-settings-4-line align-bottom mx-1 fs-15"></i>Settings</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);">Edit</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Remove</a>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end card header -->
-
-            <div class="card-body p-0">
-
-                <div class="align-items-center p-3 justify-content-between d-flex">
-                    <div class="flex-shrink-0">
-                        <div class="text-muted"><span class="fw-semibold">4</span> of <span class="fw-semibold">10</span> remaining</div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-success" routerLink="/tasks/list-view"><i class="ri-add-line align-middle me-1"></i> Add Task</button>
-                </div><!-- end card header -->
-
-                <ngx-simplebar style="max-height: 219px;">
-                    <ul class="list-group list-group-flush border-dashed px-3">
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check ps-0 flex-sharink-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_one">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_one">Review and make sure
-                                        nothing slips through cracks</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">15 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check ps-0 flex-sharink-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_two">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_two">Send meeting invites for
-                                        sales upcampaign</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">20 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check flex-sharink-0 ps-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_three">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_three">Weekly closed sales won
-                                        checking with sales team</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">24 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check ps-0 flex-sharink-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_four">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_four">Add notes that can be
-                                        viewed from the individual view</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">27 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check ps-0 flex-sharink-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_five">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_five">Move stuff to another
-                                        page</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">27 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="list-group-item ps-0">
-                            <div class="d-flex align-items-start">
-                                <div class="form-check ps-0 flex-sharink-0">
-                                    <input type="checkbox" class="form-check-input ms-0" id="task_six">
-                                </div>
-                                <div class="flex-grow-1">
-                                    <label class="form-check-label mb-0 ps-2" for="task_six">Styling wireframe design
-                                        and documentation for velzon admin</label>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <p class="text-muted fs-12 mb-0">27 Sep, 2021</p>
-                                </div>
-                            </div>
-                        </li>
-                    </ul><!-- end ul -->
-                </ngx-simplebar>
-                <div class="p-3 pt-2">
-                    <a routerLink="/tasks/list-view" class="text-muted text-decoration-underline">Show more...</a>
-                </div>
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
-</div><!-- end row -->
-
-<div class="row">
-    <div class="col-xxl-5">
-        <div class="card">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Upcoming Activities</h4>
-                <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown" ngbDropdown>
-                        <a class="text-reset dropdown-btn arrow-none" href="javascript:void(0);" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" ngbDropdownToggle>
-                            <span class="text-muted fs-18"><i class="mdi mdi-dots-vertical"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
-                            <a class="dropdown-item" href="javascript:void(0);">Edit</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Remove</a>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- end card header -->
-            <div class="card-body pt-0">
-                <ul class="list-group list-group-flush border-dashed">
-                    <app-upcoming-activities [UpcomingActivities]="UpcomingActivities"></app-upcoming-activities>
-                </ul><!-- end -->
-                <div class="align-items-center mt-2 row g-3 text-center text-sm-start">
-                    <div class="col-sm">
-                        <div class="text-muted">Showing<span class="fw-semibold">4</span> of <span class="fw-semibold">125</span> Results
-                        </div>
-                    </div>
-                    <div class="col-sm-auto">
-                        <ul class="pagination pagination-separated pagination-sm justify-content-center justify-content-sm-start mb-0">
-                            <li class="page-item disabled">
-                                <a href="javascript:void(0);" class="page-link">←</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="javascript:void(0);" class="page-link">1</a>
-                            </li>
-                            <li class="page-item active">
-                                <a href="javascript:void(0);" class="page-link">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="javascript:void(0);" class="page-link">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="javascript:void(0);" class="page-link">→</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
-
-    <div class="col-xxl-7">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Closing Deals</h4>
-                <div class="flex-shrink-0">
-                    <select class="form-select form-select-sm" aria-label=".form-select-sm example">
-                        <option selected="">Closed Deals</option>
-                        <option value="1">Active Deals</option>
-                        <option value="2">Paused Deals</option>
-                        <option value="3">Canceled Deals</option>
-                    </select>
-                </div>
-            </div><!-- end card header -->
-
-            <div class="card-body">
-                <div class="table-responsive">
-                    <app-closing-deals [ClosingDeals]="ClosingDeals"></app-closing-deals>
-                </div><!-- end table responsive -->
-            </div><!-- end card body -->
-        </div><!-- end card -->
-    </div><!-- end col -->
-</div><!-- end row -->
+  <div class="col-xl-5">
+    <article class="card h-100 mb-0">
+      <div class="card-header dashboard-card-header">
+        <div>
+          <span class="section-kicker">Material profile</span>
+          <h4 class="card-title mb-1">Waste composition</h4>
+          <p class="text-muted mb-0">Estimated share of today’s collected waste.</p>
+        </div>
+      </div>
+      <div class="card-body pt-1">
+        <apx-chart
+          [series]="wasteCompositionChart.series"
+          [chart]="wasteCompositionChart.chart"
+          [labels]="wasteCompositionChart.labels"
+          [colors]="wasteCompositionChart.colors"
+          [dataLabels]="wasteCompositionChart.dataLabels"
+          [legend]="wasteCompositionChart.legend"
+          [stroke]="wasteCompositionChart.stroke"
+          [plotOptions]="wasteCompositionChart.plotOptions"
+          [tooltip]="wasteCompositionChart.tooltip">
+        </apx-chart>
+      </div>
+    </article>
+  </div>
+</div>
