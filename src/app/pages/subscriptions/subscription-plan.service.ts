@@ -4,6 +4,21 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
+export const SUBSCRIPTION_DURATION_OPTIONS = [
+  'C - 1 Monthly',
+  'C - 3 Months',
+  'C - 6 Months',
+  'C - 12 Months'
+] as const;
+
+export const PICKUP_FREQUENCY_OPTIONS = [
+  'Once a Week',
+  'Twice a Week',
+  'Thrice a Week',
+  'Everyday',
+  'Once a Month'
+] as const;
+
 export interface SubscriptionPlan {
   id: string;
   duration: string;

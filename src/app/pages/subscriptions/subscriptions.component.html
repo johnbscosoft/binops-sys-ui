@@ -99,31 +99,39 @@
     <div class="modal-body">
       <div class="row g-3">
         <div class="col-lg-6">
-          <label for="plan-duration" class="form-label">Duration</label>
-          <input
+          <label for="plan-duration" class="form-label">Duration <span class="text-danger">*</span></label>
+          <select
             id="plan-duration"
             name="duration"
-            class="form-control"
-            placeholder="e.g. 1 Month"
+            class="form-select"
             [(ngModel)]="planForm.duration"
-            required
-            minlength="2"
-            maxlength="80">
+            required>
+            @if (planForm.duration && !isConfiguredDuration(planForm.duration)) {
+              <option [value]="planForm.duration">{{ planForm.duration }} (Current)</option>
+            }
+            @for (duration of durationOptions; track duration) {
+              <option [value]="duration">{{ duration }}</option>
+            }
+          </select>
         </div>
         <div class="col-lg-6">
-          <label for="plan-frequency" class="form-label">Pickup Frequency</label>
-          <input
+          <label for="plan-frequency" class="form-label">Pickup Frequency <span class="text-danger">*</span></label>
+          <select
             id="plan-frequency"
             name="pickupFrequency"
-            class="form-control"
-            placeholder="e.g. Once a Week"
+            class="form-select"
             [(ngModel)]="planForm.pickup_frequency"
-            required
-            minlength="2"
-            maxlength="80">
+            required>
+            @if (planForm.pickup_frequency && !isConfiguredPickupFrequency(planForm.pickup_frequency)) {
+              <option [value]="planForm.pickup_frequency">{{ planForm.pickup_frequency }} (Current)</option>
+            }
+            @for (frequency of pickupFrequencyOptions; track frequency) {
+              <option [value]="frequency">{{ frequency }}</option>
+            }
+          </select>
         </div>
         <div class="col-lg-6">
-          <label for="plan-amount" class="form-label">Amount</label>
+          <label for="plan-amount" class="form-label">Amount <span class="text-danger">*</span></label>
           <div class="input-group">
             <span class="input-group-text">UGX</span>
             <input

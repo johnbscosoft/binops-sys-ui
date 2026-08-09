@@ -1,0 +1,34 @@
+.report-toolbar { max-width: 420px; }
+.report-card { min-height: 92px; }
+.report-card .report-value { font-size: 1.5rem; font-weight: 600; }
+.table th { white-space: nowrap; }
+
+.property-collection-table {
+  min-width: 860px;
+
+  .property-group-row {
+    border-top: 2px solid var(--vz-border-color);
+    background: rgba(var(--vz-primary-rgb), 0.06);
+
+    td {
+      padding-top: 0.9rem;
+      padding-bottom: 0.9rem;
+    }
+
+    small {
+      color: var(--vz-secondary-color);
+    }
+  }
+
+  .property-room-row td {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+}
+
+@media print {
+  .report-actions,
+  app-breadcrumbs { display: none !important; }
+  .card { border: 0 !important; box-shadow: none !important; }
+  .property-collection-table { min-width: 0; font-size: 11px; }
+}

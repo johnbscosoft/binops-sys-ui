@@ -1,0 +1,161 @@
+<app-breadcrumbs title="Customer Reports" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="card report-actions">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+      <div class="report-toolbar flex-grow-1">
+        <label for="customer-report-type" class="form-label">Report</label>
+        <select id="customer-report-type" name="customerReportType" class="form-select"
+          [ngModel]="reportType" (ngModelChange)="selectReport($event)">
+          @for (option of reportOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      @if (reportType === 'status') {
+        <div>
+          <label for="customer-status-filter" class="form-label">Status</label>
+          <select id="customer-status-filter" name="customerStatusFilter" class="form-select" [(ngModel)]="statusFilter">
+            <option value="All">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      }
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-soft-primary" (click)="refresh()"><i class="ri-refresh-line me-1"></i>Refresh</button>
+        <button type="button" class="btn btn-success" (click)="printReport()"><i class="ri-printer-line me-1"></i>Print</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header border-bottom-dashed">
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <div>
+        <h5 class="card-title mb-1">{{ currentReport.label }}</h5>
+        <p class="text-muted mb-0">{{ currentReport.description }}</p>
+      </div>
+      <small class="text-muted">Generated {{ generatedAt | date:'medium' }}</small>
+    </div>
+  </div>
+  <div class="card-body">
+    @if (isLoading) {
+      <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Preparing report...</p></div>
+    } @else {
+      <div class="row g-3 mb-4">
+        @if (reportType === 'property-collections') {
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Properties</div><div class="report-value text-primary">{{ properties.length }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Configured Rooms</div><div class="report-value">{{ totalRooms }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Occupied Rooms</div><div class="report-value text-success">{{ occupiedRooms }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Expected Collection</div><div class="report-value text-info">UGX {{ expectedPropertyCollection | number:'1.0-0' }}</div></div></div>
+        } @else {
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Total Customers</div><div class="report-value">{{ customers.length }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Active Customers</div><div class="report-value text-success">{{ activeCustomers }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Properties</div><div class="report-value text-primary">{{ properties.length }}</div></div></div>
+          <div class="col-sm-6 col-xl-3"><div class="border rounded p-3 report-card"><div class="text-muted">Room Occupancy</div><div class="report-value text-info">{{ occupiedRooms }} / {{ totalRooms }}</div></div></div>
+        }
+      </div>
+
+      @if (reportType === 'property-collections') {
+        <div class="table-responsive">
+          <table class="table align-middle property-collection-table">
+            <thead class="table-light">
+              <tr>
+                <th>Client / Property</th>
+                <th>Location</th>
+                <th>Telephone</th>
+                <th>Room / Occupant</th>
+                <th class="text-end">Expected Collection</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (property of properties; track property.id) {
+                <tr class="property-group-row">
+                  <td>
+                    <div class="fw-semibold">{{ property.name }}</div>
+                    <small>{{ property.property_code }} · {{ property.property_type === 'APARTMENT' ? 'Apartment' : 'Rental' }}</small>
+                  </td>
+                  <td>{{ property.location || '—' }}</td>
+                  <td>
+                    <div>{{ property.owner_phone_number || '—' }}</div>
+                    @if (property.owner_name) { <small>{{ property.owner_name }}</small> }
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-body">{{ property.unit_count }} rooms</span>
+                    <small class="d-block mt-1">{{ property.billing_mode === 'OWNER' ? 'Owner pays' : 'Tenants pay' }}</small>
+                  </td>
+                  <td class="text-end fw-semibold">UGX {{ propertyExpectedAmount(property) | number:'1.0-0' }}</td>
+                </tr>
+                @for (unit of reportUnits(property); track unit.id || unit.room_number) {
+                  @let occupant = unitOccupant(unit);
+                  @let expectedAmount = roomExpectedAmount(property, unit);
+                  <tr class="property-room-row">
+                    <td></td>
+                    <td></td>
+                    <td>{{ occupant?.phone_no || '—' }}</td>
+                    <td>
+                      <div class="fw-medium">{{ unit.room_number }}</div>
+                      <small class="text-muted">{{ occupant?.name || (unit.occupancy_status === 'Occupied' ? 'Occupant not linked' : 'Vacant') }}</small>
+                    </td>
+                    <td class="text-end">
+                      @if (unit.occupancy_status === 'Vacant') {
+                        <span class="badge bg-secondary-subtle text-secondary">Vacant</span>
+                      } @else if (property.billing_mode === 'OWNER') {
+                        <span class="text-muted">Included in owner bill</span>
+                      } @else if (expectedAmount !== null) {
+                        <span class="fw-medium">UGX {{ expectedAmount | number:'1.0-0' }}</span>
+                      } @else {
+                        <span class="badge bg-warning-subtle text-warning">No plan assigned</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr class="property-room-row"><td></td><td></td><td></td><td colspan="2" class="text-muted">No active rooms configured.</td></tr>
+                }
+              } @empty {
+                <tr><td colspan="5" class="text-center text-muted py-4">No properties available.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (reportType === 'property-occupancy') {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light"><tr><th>Property Code</th><th>Property</th><th>Type</th><th>Billing</th><th>Total Rooms</th><th>Occupied</th><th>Vacant</th><th>Status</th></tr></thead>
+            <tbody>
+              @for (property of properties; track property.id) {
+                <tr>
+                  <td>{{ property.property_code }}</td><td class="fw-medium">{{ property.name }}</td>
+                  <td>{{ property.property_type === 'APARTMENT' ? 'Apartment' : 'Rental' }}</td>
+                  <td>{{ property.billing_mode === 'OWNER' ? 'Owner pays' : 'Tenants pay' }}</td>
+                  <td>{{ property.unit_count }}</td><td>{{ property.occupied_unit_count }}</td>
+                  <td>{{ property.unit_count - property.occupied_unit_count }}</td><td>{{ property.status }}</td>
+                </tr>
+              } @empty { <tr><td colspan="8" class="text-center text-muted py-4">No properties available.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr><th>Client ID</th><th>Name</th><th>Phone</th><th>Location</th><th>Property / Room</th>@if (reportType === 'subscriptions') { <th>Subscription</th> }<th>Status</th></tr>
+            </thead>
+            <tbody>
+              @for (customer of displayedCustomers; track customer.id) {
+                <tr>
+                  <td>CUST-{{ customer.id }}</td><td class="fw-medium">{{ customer.name }}</td><td>{{ customer.phone_no || '—' }}</td>
+                  <td>{{ customer.location }}</td><td>{{ customer.property_name ? customer.property_name + ' · ' + customer.room_number : '—' }}</td>
+                  @if (reportType === 'subscriptions') { <td>{{ planLabel(customer.subscription_plan_id) }}</td> }
+                  <td><span class="badge" [ngClass]="customer.status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">{{ customer.status }}</span></td>
+                </tr>
+              } @empty { <tr><td [attr.colspan]="reportType === 'subscriptions' ? 7 : 6" class="text-center text-muted py-4">No customers match this report.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -9,14 +9,16 @@ Pull request
   → Build the production UI
   → Merge to main
   → Build and push an immutable Docker image
-  → Manually select a published UI tag
-  → Manually pull and recreate the UI container on the server
+  → Production approval
+  → SSH to the server
+  → Pull and recreate the UI container
+  → Verify container health
 ```
 
-The shared Docker Hub repository and UI tag prefix are:
+The Docker Hub image is:
 
 ```text
-jbscosoft/binops-sys:ui-*
+jbscosoft/binops-sys-ui
 ```
 
 The current legacy component suite contains TestBed setup failures. The workflow
@@ -26,13 +28,36 @@ test step after those specs have been corrected.
 
 ## 1. Docker Hub and GitHub
 
-Create the single private repository `jbscosoft/binops-sys` in Docker Hub.
-Ensure the existing GitHub Actions secret `DOCKERHUB_TOKEN` has read/write
-access to it. The API uses `api-*` tags and the UI uses `ui-*` tags in this
-shared repository.
+Create `jbscosoft/binops-sys-ui` in Docker Hub. Ensure the existing GitHub
+Actions secret `DOCKERHUB_TOKEN` has read/write access to it.
 
-No production SSH keys, server address, deployment user, or deployment path are
-required in GitHub. The workflow never connects to the production server.
+Create a GitHub environment named `production`. Optionally add required
+reviewers so a person must approve each production deployment.
+
+Create these repository or `production` environment secrets:
+
+| Name | Purpose |
+| --- | --- |
+| `DEPLOY_HOST` | Production server hostname or IP |
+| `DEPLOY_USER` | Restricted Linux deployment user |
+| `DEPLOY_SSH_KEY` | Private SSH key for that user |
+| `DEPLOY_KNOWN_HOSTS` | Verified SSH host-key entry |
+| `DEPLOY_PORT` | Optional SSH port; defaults to `22` |
+
+Create this GitHub Actions variable:
+
+```text
+DEPLOY_PATH=/opt/binops-sys-ui
+```
+
+The workflow deploys production only for successful pushes or merges to `main`.
+The current repository branch is `master`; create and use `main` before expecting
+automatic production deployment:
+
+```bash
+git branch -M main
+git push -u origin main
+```
 
 ## 2. Prepare the server
 
@@ -50,6 +75,8 @@ Create the shared private Docker network:
 ```bash
 docker network create binops_backend
 ```
+
+The SSH workflow also creates it when it does not exist.
 
 Attach the API container to that network:
 
@@ -72,9 +99,9 @@ docker login --username jbscosoft
 
 ```bash
 cd /opt/binops-sys-ui
-UI_IMAGE_TAG=ui-latest docker compose -f compose.yaml pull ui
-UI_IMAGE_TAG=ui-latest docker compose -f compose.yaml up -d --remove-orphans ui
-docker compose -f compose.yaml ps
+UI_IMAGE_TAG=latest docker compose -f compose-ui.yaml pull ui
+UI_IMAGE_TAG=latest docker compose -f compose-ui.yaml up -d --remove-orphans ui
+docker compose -f compose-ui.yaml ps
 ```
 
 The UI is bound to `127.0.0.1:8080` by default for a host-level Nginx, Caddy, or
@@ -91,10 +118,10 @@ API_UPSTREAM=http://your-api:8001 docker compose -f compose.yaml up -d ui
 
 The workflow publishes:
 
-- `ui-sha-<full-commit>` for production deployment and rollback.
-- `ui-main`, `ui-master`, or `ui-testenv` for branch builds.
-- `ui-latest` only for `main`.
-- UI-prefixed semantic-version tags such as `ui-1.2.0`.
+- `sha-<full-commit>` for production deployment and rollback.
+- `main`, `master`, or `testenv` for branch builds.
+- `latest` only for `main`.
+- semantic-version tags for Git tags such as `v1.2.0`.
 
 ## 5. Verification and rollback
 
@@ -107,7 +134,7 @@ docker compose -f compose.yaml logs --tail=100 ui
 To roll back, put the previous immutable tag in `.deploy.env`:
 
 ```env
-UI_IMAGE_TAG=ui-sha-previous-full-commit
+UI_IMAGE_TAG=sha-previous-full-commit
 ```
 
 Then run:

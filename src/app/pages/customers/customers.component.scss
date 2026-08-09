@@ -5,6 +5,21 @@
 .table td {
   vertical-align: middle;
 }
+
+.customer-form-scroll {
+  max-height: calc(100vh - 210px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 575.98px) {
+  .customer-form-scroll {
+    max-height: calc(100vh - 180px);
+  }
+}
+
 .google-location-autocomplete,
 .google-location-autocomplete gmp-place-autocomplete {
   display: block;
@@ -34,8 +49,8 @@
 }
 
 .customer-attachment-dropzone {
-  min-height: 190px;
-  padding: 24px;
+  min-height: 128px;
+  padding: 14px;
   border: 2px dashed var(--vz-border-color);
   border-radius: 6px;
   background: var(--vz-secondary-bg);
@@ -57,13 +72,13 @@
 
   .upload-icon,
   .attachment-icon {
-    width: 52px;
-    height: 52px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 28px;
+    font-size: 20px;
   }
 
   .upload-icon {
@@ -74,5 +89,216 @@
   .attachment-icon {
     color: var(--vz-danger);
     background: rgba(var(--vz-danger-rgb), 0.1);
+  }
+}
+
+.customer-notes {
+  min-height: 128px;
+  resize: vertical;
+}
+
+.text-pre-wrap {
+  white-space: pre-wrap;
+}
+
+.property-setup-section,
+.rooms-section {
+  padding: 1.25rem;
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.5rem;
+  background: var(--vz-secondary-bg);
+}
+
+.arrangement-option {
+  position: relative;
+  width: 100%;
+  min-height: 108px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.5rem;
+  background: var(--vz-body-bg);
+  color: var(--vz-body-color);
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--vz-success);
+    box-shadow: 0 0 0 0.2rem rgba(var(--vz-success-rgb), 0.1);
+    outline: none;
+  }
+
+  &.active {
+    border-color: var(--vz-success);
+    background: rgba(var(--vz-success-rgb), 0.07);
+
+    .selection-icon {
+      opacity: 1;
+    }
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  small {
+    margin-top: 0.35rem;
+    color: var(--vz-secondary-color);
+    line-height: 1.45;
+  }
+
+  .arrangement-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(var(--vz-success-rgb), 0.12);
+    color: var(--vz-success);
+    font-size: 1.25rem;
+  }
+
+  .selection-icon {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    color: var(--vz-success);
+    opacity: 0;
+  }
+}
+
+.pricing-mode-group {
+  flex-wrap: wrap;
+}
+
+.room-summary-card {
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.4rem;
+  background: var(--vz-body-bg);
+
+  strong {
+    font-size: 1rem;
+  }
+
+  span {
+    margin-top: 0.15rem;
+    color: var(--vz-secondary-color);
+    font-size: 0.75rem;
+  }
+}
+
+.room-editor-card {
+  padding: 1rem;
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.5rem;
+  background: var(--vz-body-bg);
+}
+
+.room-number-badge {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(var(--vz-primary-rgb), 0.1);
+  color: var(--vz-primary);
+  font-weight: 600;
+}
+
+.empty-rooms-state {
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--vz-border-color);
+  border-radius: 0.5rem;
+  color: var(--vz-secondary-color);
+  text-align: center;
+
+  i {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--vz-primary);
+    font-size: 2rem;
+  }
+
+  h6 {
+    color: var(--vz-body-color);
+  }
+
+  p {
+    margin-bottom: 0;
+  }
+}
+
+.customer-stepper {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.customer-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid var(--vz-border-color);
+  border-radius: 0.5rem;
+  background: var(--vz-secondary-bg);
+  color: var(--vz-secondary-color);
+
+  &.active {
+    border-color: var(--vz-success);
+    background: rgba(var(--vz-success-rgb), 0.08);
+    color: var(--vz-success);
+  }
+
+  &.completed {
+    color: var(--vz-success);
+  }
+}
+
+.step-number {
+  display: inline-grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 1.8rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--vz-secondary-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+.customer-step.active .step-number,
+.customer-step.completed .step-number {
+  background: var(--vz-success);
+}
+
+.step-label {
+  font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+  .customer-stepper {
+    gap: 0.35rem;
+  }
+
+  .customer-step {
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .step-label {
+    display: none;
   }
 }

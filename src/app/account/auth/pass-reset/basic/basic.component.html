@@ -45,7 +45,7 @@
                             <div class="p-2">
                                 <form [formGroup]="passresetForm" (ngSubmit)="onSubmit()">
                                     <div class="mb-4">
-                                        <label class="form-label">Email</label>
+                                        <label class="form-label">Email <span class="text-danger">*</span></label>
                                         <input type="email" class="form-control" id="email" placeholder="Enter Email" formControlName="email" [ngClass]="{ 'is-invalid': submitted && f['email'].errors }">
                                         @if (submitted && f['email'].errors) {
                                         <div class="invalid-feedback" align="left">

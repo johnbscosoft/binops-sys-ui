@@ -6,6 +6,9 @@ import { SubscriptionsComponent } from './subscriptions/subscriptions.component'
 import { UsersComponent } from './users/users.component';
 import { ContractsComponent } from './contracts/contracts.component';
 import { AuthenticationSettingsComponent } from './authentication-settings/authentication-settings.component';
+import { ClientCategoriesComponent } from './client-categories/client-categories.component';
+import { PropertiesComponent } from './properties/properties.component';
+import { CustomerReportsComponent } from './customer-reports/customer-reports.component';
 
 const routes: Routes = [
     {
@@ -18,8 +21,21 @@ const routes: Routes = [
       component: CustomersComponent
     },
     {
+      path: 'customers/properties',
+      component: PropertiesComponent
+    },
+    {
       path: 'customers/contracts',
       component: ContractsComponent
+    },
+    {
+      path: 'customers/reports/:type',
+      component: CustomerReportsComponent
+    },
+    {
+      path: 'customers/reports',
+      redirectTo: 'customers/reports/summary',
+      pathMatch: 'full'
     },
     {
       path: 'subscriptions/plans',
@@ -32,6 +48,10 @@ const routes: Routes = [
     {
       path: 'administration/authentication-settings',
       component: AuthenticationSettingsComponent
+    },
+    {
+      path: 'administration/client-categories',
+      component: ClientCategoriesComponent
     },
     {
       path: 'administration/users',

@@ -81,3 +81,9 @@
     }
 
 }
+
+// Customer custom-subscription panel opens above the customer modal.
+.custom-subscription-offcanvas {
+    z-index: 1058 !important;
+    width: min(430px, 100vw) !important;
+}

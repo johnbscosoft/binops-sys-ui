@@ -1,0 +1,12 @@
+.property-type-icon {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--vz-success);
+  background: var(--vz-success-bg-subtle);
+  border-radius: .5rem;
+  place-items: center;
+}
+
+.property-form-scroll { max-height: calc(100vh - 14rem); overflow-y: auto; }
+.table th { white-space: nowrap; }

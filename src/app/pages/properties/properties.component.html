@@ -1,0 +1,204 @@
+<app-breadcrumbs title="Properties" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="card">
+  <div class="card-header border-bottom-dashed">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <h5 class="card-title mb-1">Properties</h5>
+        <p class="text-muted mb-0">Configure apartments, rentals, rooms and who is responsible for payment.</p>
+      </div>
+      <button type="button" class="btn btn-success" (click)="openCreate(propertyModal)">
+        <i class="ri-add-line me-1"></i>Add Property
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-sm-6 col-lg-4">
+        <div class="search-box">
+          <input type="search" class="form-control" placeholder="Search properties..." [(ngModel)]="searchTerm">
+          <i class="ri-search-line search-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+    } @else {
+      <div class="table-responsive table-card">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted">
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>Payment Responsibility</th>
+              <th>Owner</th>
+              <th>Rooms</th>
+              <th>Occupancy</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (property of filteredProperties; track property.id) {
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="property-type-icon"><i class="ri-building-2-line"></i></span>
+                    <div><div class="fw-medium">{{ property.name }}</div><small class="text-muted">{{ property.property_code }}</small></div>
+                  </div>
+                </td>
+                <td>{{ property.property_type === 'APARTMENT' ? 'Apartment' : 'Rental' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="property.billing_mode === 'OWNER' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info'">
+                    {{ property.billing_mode === 'OWNER' ? 'Property owner pays' : 'Tenants pay individually' }}
+                  </span>
+                </td>
+                <td>{{ property.owner_name || '—' }}</td>
+                <td>{{ property.unit_count }}</td>
+                <td>{{ property.occupied_unit_count }} occupied / {{ property.unit_count - property.occupied_unit_count }} vacant</td>
+                <td><span class="badge" [ngClass]="property.status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">{{ property.status }}</span></td>
+                <td>
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-soft-primary" (click)="openEdit(property, propertyModal)"><i class="ri-pencil-line me-1"></i>Edit</button>
+                    <button type="button" class="btn btn-sm btn-soft-danger" (click)="deleteProperty(property)"><i class="ri-delete-bin-line"></i></button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="text-center text-muted py-4">No properties configured.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<ng-template #propertyModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div>
+      <h5 class="modal-title mb-1">{{ editingProperty ? 'Edit Property' : 'Add Property' }}</h5>
+      <span class="text-muted fs-12">Configure the property before attaching customers to rooms.</span>
+    </div>
+    <button type="button" class="btn-close" (click)="modal.dismiss('Close')"></button>
+  </div>
+  <form #form="ngForm" (ngSubmit)="saveProperty()">
+    <div class="modal-body property-form-scroll">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="property-name" class="form-label">Property Name <span class="text-danger">*</span></label>
+          <input id="property-name" name="propertyName" class="form-control" [(ngModel)]="propertyForm.name" required minlength="2" maxlength="160">
+        </div>
+        <div class="col-md-6">
+          <label for="property-type" class="form-label">Property Type <span class="text-danger">*</span></label>
+          <select id="property-type" name="propertyType" class="form-select" [(ngModel)]="propertyForm.property_type" required>
+            <option value="APARTMENT">Apartment</option>
+            <option value="RENTAL">Rental</option>
+          </select>
+        </div>
+        <div class="col-md-8">
+          <label for="property-location" class="form-label">Location <span class="text-danger">*</span></label>
+          <input id="property-location" name="propertyLocation" class="form-control" [(ngModel)]="propertyForm.location" required minlength="2" maxlength="500">
+        </div>
+        <div class="col-md-4">
+          <label for="property-status" class="form-label">Status <span class="text-danger">*</span></label>
+          <select id="property-status" name="propertyStatus" class="form-select" [(ngModel)]="propertyForm.status" required>
+            <option value="Active">Active</option><option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Who Pays? <span class="text-danger">*</span></label>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <button type="button" class="btn w-100 text-start p-3" [ngClass]="propertyForm.billing_mode === 'TENANT' ? 'btn-success' : 'btn-outline-success'" (click)="selectBillingMode('TENANT')">
+                <strong class="d-block">Tenants Pay Individually</strong><small>Each customer has a subscription and price.</small>
+              </button>
+            </div>
+            <div class="col-md-6">
+              <button type="button" class="btn w-100 text-start p-3" [ngClass]="propertyForm.billing_mode === 'OWNER' ? 'btn-success' : 'btn-outline-success'" (click)="selectBillingMode('OWNER')">
+                <strong class="d-block">Property Owner Pays</strong><small>One property subscription covers all rooms.</small>
+              </button>
+            </div>
+          </div>
+        </div>
+        @if (propertyForm.billing_mode === 'OWNER') {
+          <div class="col-md-4">
+            <label for="property-owner-name" class="form-label">Property Owner Name <span class="text-danger">*</span></label>
+            <input id="property-owner-name" name="propertyOwnerName" class="form-control"
+              [(ngModel)]="propertyForm.owner_name" required minlength="2" maxlength="160"
+              placeholder="Enter the owner's full name">
+          </div>
+          <div class="col-md-4">
+            <label for="property-owner-phone" class="form-label">Owner Phone Number <span class="text-danger">*</span></label>
+            <input id="property-owner-phone" name="propertyOwnerPhone" type="tel" class="form-control"
+              [(ngModel)]="propertyForm.owner_phone_number" required pattern="^07[0-9]{8}$"
+              maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX">
+          </div>
+          <div class="col-md-4">
+            <label for="property-owner-email" class="form-label">Owner Email <span class="text-danger">*</span></label>
+            <input id="property-owner-email" name="propertyOwnerEmail" type="email" class="form-control"
+              [(ngModel)]="propertyForm.owner_email" required email maxlength="255"
+              placeholder="owner@example.com">
+          </div>
+          <div class="col-md-6">
+            <label for="property-plan" class="form-label">Property Subscription Plan <span class="text-danger">*</span></label>
+            <select id="property-plan" name="propertyPlan" class="form-select" [(ngModel)]="propertyForm.subscription_plan_id" required>
+              <option [ngValue]="null" disabled>Select a subscription plan</option>
+              @for (plan of subscriptionPlans; track plan.id) { <option [value]="plan.id">{{ planLabel(plan) }}</option> }
+            </select>
+          </div>
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="alert alert-info border-0 py-2 mb-0 w-100">
+              <i class="ri-user-add-line me-1"></i>
+              The owner will be created in Customers automatically, or matched by phone/email if already registered.
+            </div>
+          </div>
+        }
+        <div class="col-12 mt-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div><h6 class="mb-1">Configured Rooms</h6><small class="text-muted">Only configured active rooms can be assigned on the customer form.</small></div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-soft-primary" (click)="generateUnits()"><i class="ri-magic-line me-1"></i>Generate Rooms</button>
+              <button type="button" class="btn btn-sm btn-success" (click)="addUnit()"><i class="ri-add-line me-1"></i>Add Room</button>
+            </div>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            @for (unit of propertyForm.units; track unit.id || $index) {
+              <div class="row g-2 align-items-center border rounded p-2 mx-0">
+                <div class="col-md-7">
+                  <label [for]="'unit-' + $index" class="form-label mb-1">Room Number <span class="text-danger">*</span></label>
+                  <input [id]="'unit-' + $index" [name]="'unit_' + $index" class="form-control" [(ngModel)]="unit.room_number" required maxlength="80">
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check form-switch mt-4">
+                    <input
+                      [id]="'unit-occupied-' + $index"
+                      [name]="'unit_occupied_' + $index"
+                      type="checkbox"
+                      class="form-check-input"
+                      [ngModel]="unit.occupancy_status === 'Occupied'"
+                      (ngModelChange)="toggleUnitOccupancy(unit, $event)">
+                    <label [for]="'unit-occupied-' + $index" class="form-check-label">
+                      {{ unit.occupancy_status === 'Occupied' ? 'Occupied' : 'Vacant' }}
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-2 text-end"><button type="button" class="btn btn-sm btn-soft-danger mt-4" (click)="removeUnit($index)"><i class="ri-delete-bin-line"></i></button></div>
+              </div>
+            } @empty {
+              <div class="text-center text-muted border rounded py-4">No rooms configured yet.</div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss('Cancel')">Cancel</button>
+      <button type="submit" class="btn btn-success" [disabled]="isSaving">
+        @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        {{ editingProperty ? 'Update Property' : 'Add Property' }}
+      </button>
+    </div>
+  </form>
+</ng-template>

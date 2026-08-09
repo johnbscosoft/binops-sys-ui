@@ -3,6 +3,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 import {
+  PICKUP_FREQUENCY_OPTIONS,
+  SUBSCRIPTION_DURATION_OPTIONS,
   SubscriptionPlan,
   SubscriptionPlanPayload,
   SubscriptionPlanService
@@ -46,6 +48,8 @@ export class SubscriptionsComponent implements OnInit {
   planForm: SubscriptionPlanPayload = this.emptyForm();
   isLoading = false;
   isSaving = false;
+  readonly durationOptions = [...SUBSCRIPTION_DURATION_OPTIONS];
+  readonly pickupFrequencyOptions = [...PICKUP_FREQUENCY_OPTIONS];
 
   constructor(
     private readonly planService: SubscriptionPlanService,
@@ -57,7 +61,13 @@ export class SubscriptionsComponent implements OnInit {
   }
 
   get durations(): string[] {
-    const preferredOrder = ['1 Month', '3 Months', '6 Months'];
+    const preferredOrder = [
+      ...SUBSCRIPTION_DURATION_OPTIONS,
+      '1 Month',
+      '3 Months',
+      '6 Months',
+      '12 Months'
+    ];
     const availableDurations = new Set(this.plans.map((plan) => plan.duration));
     const orderedDurations = preferredOrder.filter((duration) => availableDurations.has(duration));
     const otherDurations = [...availableDurations].filter(
@@ -227,10 +237,20 @@ export class SubscriptionsComponent implements OnInit {
     return `UGX ${Number(amount).toLocaleString()}`;
   }
 
+  isConfiguredDuration(duration: string): boolean {
+    return this.durationOptions.includes(duration as typeof SUBSCRIPTION_DURATION_OPTIONS[number]);
+  }
+
+  isConfiguredPickupFrequency(frequency: string): boolean {
+    return this.pickupFrequencyOptions.includes(
+      frequency as typeof PICKUP_FREQUENCY_OPTIONS[number]
+    );
+  }
+
   private emptyForm(isCustom = false): SubscriptionPlanPayload {
     return {
-      duration: isCustom ? 'Custom' : '1 Month',
-      pickup_frequency: isCustom ? 'Custom' : 'Once a Week',
+      duration: SUBSCRIPTION_DURATION_OPTIONS[0],
+      pickup_frequency: PICKUP_FREQUENCY_OPTIONS[0],
       amount: 0,
       notes: null,
       is_custom: isCustom,

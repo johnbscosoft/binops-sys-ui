@@ -41,8 +41,11 @@
                 <tr>
                   <th>Client ID</th>
                   <th>Name</th>
+                  <th>Category</th>
+                  <th>Bags</th>
                   <th>Phone</th>
                   <th>Location</th>
+                  <th>Date Added</th>
                   <th>Status</th>
                   <th class="text-end">Actions</th>
                 </tr>
@@ -58,9 +61,19 @@
                         {{ customer.customer_id }}
                       </button>
                     </td>
-                    <td>{{ customer.name }}</td>
+                    <td>
+                      <div class="fw-medium">{{ customer.name }}</div>
+                      @if (customer.property_name) {
+                        <small class="text-muted">
+                          <i class="ri-home-4-line me-1"></i>{{ customer.property_name }} · {{ customer.room_number }}
+                        </small>
+                      }
+                    </td>
+                    <td>{{ clientCategoryName(customer.client_category_id) }}</td>
+                    <td>{{ customer.number_of_bags }}</td>
                     <td>{{ customer.phone_no }}</td>
                     <td>{{ customer.location }}</td>
+                    <td class="text-nowrap">{{ customer.date_added | date:'dd MMM yyyy' }}</td>
                     <td>
                       <span
                         class="badge text-uppercase"
@@ -75,7 +88,8 @@
                         <button type="button" class="btn btn-sm btn-soft-primary" (click)="openEditCustomer(customerModal, customer)">
                           <i class="ri-pencil-line me-1"></i>Edit
                         </button>
-                        <button type="button" class="btn btn-sm btn-soft-danger" (click)="deleteCustomer(customer)">
+                        <button type="button" class="btn btn-sm btn-soft-danger"
+                          (click)="deleteCustomer(customer)">
                           <i class="ri-delete-bin-line me-1"></i>Delete
                         </button>
                         <button
@@ -90,7 +104,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No customers found.</td>
+                    <td colspan="9" class="text-center text-muted py-4">No customers found.</td>
                   </tr>
                 }
               </tbody>
@@ -162,6 +176,28 @@
           <div class="detail-value">{{ customer.customer_id }}</div>
         </div>
         <div class="col-md-6">
+          <div class="detail-label">Client Category</div>
+          <div class="detail-value">{{ clientCategoryName(customer.client_category_id) }}</div>
+        </div>
+        @if (customer.property_name) {
+          <div class="col-md-6">
+            <div class="detail-label">Property</div>
+            <div class="detail-value">{{ customer.property_name }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Room Number</div>
+            <div class="detail-value">{{ customer.room_number }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Payment Responsibility</div>
+            <div class="detail-value">{{ customer.property_billing_mode === 'OWNER' ? 'Property owner pays' : 'Tenant pays individually' }}</div>
+          </div>
+        }
+        <div class="col-md-6">
+          <div class="detail-label">Number of Bags</div>
+          <div class="detail-value">{{ customer.number_of_bags }}</div>
+        </div>
+        <div class="col-md-6">
           <div class="detail-label">Phone Number</div>
           <a [href]="'tel:' + customer.phone_no" class="detail-value">{{ customer.phone_no }}</a>
         </div>
@@ -173,10 +209,36 @@
           <div class="detail-label">Subscription Plan</div>
           <div class="detail-value">{{ selectedCustomerPlanLabel(customer) }}</div>
         </div>
+        @if (customer.service_arrangement) {
+          <div class="col-md-6">
+            <div class="detail-label">Service Arrangement</div>
+            <div class="detail-value">{{ serviceArrangementLabel(customer) }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Room Pricing</div>
+            <div class="detail-value">
+              {{ customer.room_pricing_mode === 'PER_ROOM' ? 'Price per room' : 'Shared property pricing' }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Caretaker / Contact Person</div>
+            <div class="detail-value">{{ customer.caretaker_name || '—' }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-label">Caretaker Phone</div>
+            <div class="detail-value">{{ customer.caretaker_phone || '—' }}</div>
+          </div>
+        }
         <div class="col-12">
           <div class="detail-label">Location</div>
           <div class="detail-value">{{ customer.location }}</div>
         </div>
+        @if (customer.notes) {
+          <div class="col-12">
+            <div class="detail-label">Notes</div>
+            <div class="detail-value text-pre-wrap">{{ customer.notes }}</div>
+          </div>
+        }
         <div class="col-md-6">
           <div class="detail-label">Flat Number</div>
           <div class="detail-value">{{ customer.flat_no || '—' }}</div>
@@ -195,6 +257,54 @@
             <div class="detail-value">{{ customer.longitude }}</div>
           </div>
         }
+        @if (customer.service_arrangement) {
+          <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div>
+                <div class="detail-label mb-1">Rooms</div>
+                <div class="text-muted fs-12">
+                  {{ customer.rooms.length }} total ·
+                  {{ customerRoomCount(customer, 'Occupied') }} occupied ·
+                  {{ customerRoomCount(customer, 'Vacant') }} vacant
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive border rounded">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Room</th>
+                    <th>Occupancy</th>
+                    <th>Tenant</th>
+                    <th>Telephone</th>
+                    <th>Plan</th>
+                    <th class="text-end">Bags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (room of customer.rooms; track room.id || $index) {
+                    <tr>
+                      <td class="fw-medium">{{ room.room_number }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="room.occupancy_status === 'Occupied'
+                          ? 'bg-success-subtle text-success'
+                          : 'bg-secondary-subtle text-secondary'">
+                          {{ room.occupancy_status }}
+                        </span>
+                      </td>
+                      <td>{{ room.occupant_name || '—' }}</td>
+                      <td>{{ room.phone_number || '—' }}</td>
+                      <td>{{ selectedRoomPlanLabel(room, customer) }}</td>
+                      <td class="text-end">{{ room.number_of_bags }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="6" class="text-center text-muted py-3">No rooms added yet.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
       </div>
     </div>
     <div class="modal-footer">
@@ -206,14 +316,66 @@
 <ng-template #customerModal let-modal>
   <div class="modal-header bg-light p-3">
     <h5 class="modal-title">{{ editingCustomer ? 'Edit Client Information' : 'Add New Client' }}</h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      [disabled]="isCustomPlanPanelOpen"
+      (click)="modal.dismiss('Close')"></button>
   </div>
 
   <form #form="ngForm" (ngSubmit)="saveCustomer()">
-    <div class="modal-body">
+    <fieldset
+      class="border-0 p-0 m-0"
+      [class.opacity-75]="isCustomPlanPanelOpen"
+      [disabled]="isCustomPlanPanelOpen"
+      [attr.inert]="isCustomPlanPanelOpen ? '' : null"
+      [attr.aria-disabled]="isCustomPlanPanelOpen">
+    <div class="modal-body customer-form-scroll">
+      <div class="customer-stepper mb-4" aria-label="Customer form progress">
+        @for (step of customerFormSteps; track step.number) {
+          <div class="customer-step" [class.active]="customerFormStep === step.number" [class.completed]="customerFormStep > step.number">
+            <span class="step-number">
+              @if (customerFormStep > step.number) { <i class="ri-check-line"></i> } @else { {{ step.number }} }
+            </span>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+        }
+      </div>
       <div class="row g-3">
+        @if (customerFormStep === 1) {
         <div class="col-12 col-md-6">
-          <label for="customer-name" class="form-label">Name</label>
+          <label for="customer-category" class="form-label">Client Category <span class="text-danger">*</span></label>
+          <select
+            id="customer-category"
+            name="client_category_id"
+            class="form-select"
+            [ngModel]="customerForm.client_category_id"
+            (ngModelChange)="onClientCategoryChange($event)"
+            #categoryControl="ngModel"
+            required
+            [disabled]="clientCategoriesLoading"
+            [class.is-invalid]="categoryControl.invalid && categoryControl.touched">
+            <option value="" disabled>
+              {{ clientCategoriesLoading ? 'Loading client categories...' : 'Select a client category' }}
+            </option>
+            @for (category of availableClientCategories(); track category.id) {
+              <option [value]="category.id">
+                {{ category.name }}{{ category.is_active ? '' : ' (Inactive)' }}
+              </option>
+            }
+          </select>
+          @if (categoryControl.invalid && categoryControl.touched) {
+            <div class="invalid-feedback">Client category is required.</div>
+          }
+          @if (isPropertyCustomer) {
+            <div class="form-text text-success">
+              <i class="ri-building-line me-1"></i>Property and room details will be available in the Service &amp; Property step.
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="customer-name" class="form-label">Name <span class="text-danger">*</span></label>
           <input id="customer-name" name="name" type="text" class="form-control"
             [(ngModel)]="customerForm.name" #nameControl="ngModel" required minlength="2"
             [class.is-invalid]="nameControl.invalid && nameControl.touched">
@@ -225,7 +387,7 @@
           }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-phone" class="form-label">Phone Number</label>
+          <label for="customer-phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
           <input id="customer-phone" name="phone_no" type="tel" class="form-control"
             [(ngModel)]="customerForm.phone_no" #phoneControl="ngModel" required
             pattern="^07[0-9]{8}$" maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX"
@@ -238,7 +400,7 @@
           }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-email" class="form-label">Email</label>
+          <label for="customer-email" class="form-label">Email <span class="text-danger">*</span></label>
           <input id="customer-email" name="email" type="email" class="form-control"
             [(ngModel)]="customerForm.email" #emailControl="ngModel" email required
             [class.is-invalid]="emailControl.invalid && emailControl.touched">
@@ -250,18 +412,24 @@
           }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-location" class="form-label">Location</label>
+          <label for="customer-location" class="form-label">
+            Location
+            @if (!isPropertyCustomer) { <span class="text-danger">*</span> }
+            @else { <span class="text-muted fs-12">(inherited from property)</span> }
+          </label>
           @if (useGoogleLocations) {
             <div id="customer-location" #locationAutocompleteContainer class="google-location-autocomplete"></div>
-            <input name="location" type="hidden" [(ngModel)]="customerForm.location" required>
+            <input name="location" type="hidden" [(ngModel)]="customerForm.location" [required]="!isPropertyCustomer">
             @if (customerForm.location) {
               <div class="form-text text-success">
                 <i class="ri-map-pin-line me-1"></i>{{ customerForm.location }}
               </div>
+            } @else {
+              <div class="form-text">Type a location, then select it from the suggestions.</div>
             }
           } @else {
             <input id="customer-location" name="location" type="text" class="form-control"
-              [(ngModel)]="customerForm.location" #locationControl="ngModel" required
+              [(ngModel)]="customerForm.location" #locationControl="ngModel" [required]="!isPropertyCustomer"
               [class.is-invalid]="locationControl.invalid && locationControl.touched">
             @if (locationControl.invalid && locationControl.touched) {
               <div class="invalid-feedback">Location is required.</div>
@@ -285,94 +453,463 @@
           <input id="customer-house-number" name="house_no" type="text" class="form-control" [(ngModel)]="customerForm.house_no">
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-subscription-plan" class="form-label">Subscription Plan</label>
+          <label for="customer-number-of-bags" class="form-label">Number of Bags</label>
+          <input
+            id="customer-number-of-bags"
+            name="number_of_bags"
+            type="number"
+            class="form-control"
+            [(ngModel)]="customerForm.number_of_bags"
+            #bagsControl="ngModel"
+            min="0"
+            step="1"
+            pattern="^[0-9]+$"
+            inputmode="numeric"
+            placeholder="0"
+            [class.is-invalid]="bagsControl.invalid && bagsControl.touched">
+          @if (bagsControl.invalid && bagsControl.touched) {
+            <div class="invalid-feedback">Enter a whole number of zero or greater.</div>
+          }
+          <div class="form-text">Optional. Defaults to 0.</div>
+        </div>
+        }
+        @if (customerFormStep === 2) {
+        @if (isPropertyCustomer) {
+          <div class="col-12 col-md-6">
+            <label for="customer-property" class="form-label">Property <span class="text-danger">*</span></label>
+            <select id="customer-property" name="property_id" class="form-select"
+              [ngModel]="customerForm.property_id" (ngModelChange)="onPropertyChange($event)"
+              [disabled]="propertiesLoading" required>
+              <option value="" disabled>{{ propertiesLoading ? 'Loading properties...' : 'Select a property' }}</option>
+              @for (property of matchingProperties; track property.id) {
+                <option [value]="property.id">{{ property.name }}</option>
+              }
+            </select>
+            @if (!propertiesLoading && !matchingProperties.length) {
+              <div class="form-text text-warning">No matching properties are configured. Add one from Customer Management → Properties.</div>
+            } @else if (selectedProperty?.location) {
+              <div class="form-text text-success"><i class="ri-map-pin-line me-1"></i>Customer location: {{ selectedProperty?.location }}</div>
+            }
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="customer-property-unit" class="form-label">Room Number <span class="text-danger">*</span></label>
+            <select id="customer-property-unit" name="property_unit_id" class="form-select"
+              [(ngModel)]="customerForm.property_unit_id"
+              [disabled]="!customerForm.property_id || propertyUnitsLoading" required>
+              <option value="" disabled>{{ propertyUnitsLoading ? 'Loading available rooms...' : 'Select a room' }}</option>
+              @for (unit of availablePropertyUnits; track unit.id) {
+                <option [value]="unit.id">{{ unit.room_number }}</option>
+              }
+            </select>
+            @if (customerForm.property_id && !propertyUnitsLoading && !availablePropertyUnits.length) {
+              <div class="form-text text-warning">No vacant configured rooms are available.</div>
+            }
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="occupancy-start-date" class="form-label">Occupancy Start Date</label>
+            <input id="occupancy-start-date" name="occupancy_start_date" type="date" class="form-control" [(ngModel)]="customerForm.occupancy_start_date">
+          </div>
+          <div class="col-12 col-md-6 d-flex align-items-end">
+            <div class="alert alert-info border-0 mb-0 py-2 w-100">
+              @if (selectedProperty?.billing_mode === 'OWNER') {
+                <i class="ri-building-line me-1"></i>The property owner pays; this customer does not need a subscription.
+              } @else {
+                <i class="ri-user-line me-1"></i>This tenant pays individually and needs a subscription.
+              }
+            </div>
+          </div>
+        }
+        <div class="col-12 col-md-6">
+          <label for="customer-subscription-plan" class="form-label">
+            Subscription Plan
+            @if (defaultPlanRequired) { <span class="text-danger">*</span> }
+          </label>
           <select id="customer-subscription-plan" name="subscription_plan_id" class="form-select"
-            [(ngModel)]="customerForm.subscription_plan_id" #planControl="ngModel" required
+            [ngModel]="customerForm.subscription_plan_id" #planControl="ngModel"
+            [required]="defaultPlanRequired"
+            (ngModelChange)="onSubscriptionPlanSelection($event, customSubscriptionOffcanvas)"
             [disabled]="subscriptionPlansLoading"
             [class.is-invalid]="planControl.invalid && planControl.touched">
-            <option value="" disabled>
-              {{ subscriptionPlansLoading ? 'Loading subscription plans...' : 'Select a subscription plan' }}
+            <option value="" [disabled]="defaultPlanRequired">
+              {{ subscriptionPlansLoading
+                ? 'Loading subscription plans...'
+                : (defaultPlanRequired ? 'Select a subscription plan' : 'No default plan') }}
             </option>
             @for (plan of subscriptionPlans; track plan.id) {
               <option [value]="plan.id">
                 {{ subscriptionPlanLabel(plan) }}
               </option>
             }
+            <option disabled>────────────────────</option>
+            <option [value]="customPlanOptionValue">＋ Add Custom Subscription...</option>
           </select>
           @if (planControl.invalid && planControl.touched) {
             <div class="invalid-feedback">Subscription plan is required.</div>
           }
+          @if (isPropertyCustomer && !defaultPlanRequired) {
+            <div class="form-text">Billing is handled by the property owner.</div>
+          }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-status" class="form-label">Status</label>
+          <label for="customer-status" class="form-label">Status <span class="text-danger">*</span></label>
           <select id="customer-status" name="status" class="form-select" [(ngModel)]="customerForm.status" required>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
         </div>
+        @if (isPropertyCustomer && customerForm.service_arrangement) {
+          <div class="col-12">
+            <div class="rooms-section">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                  <h6 class="mb-1">Rooms</h6>
+                  <p class="text-muted mb-0 fs-12">
+                    Keep room numbers stable. Tenant fields are required only for occupied rooms when billing tenants directly.
+                  </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button type="button" class="btn btn-sm btn-soft-primary" (click)="generateRooms()">
+                    <i class="ri-magic-line me-1"></i>Generate Rooms
+                  </button>
+                  <button type="button" class="btn btn-sm btn-success" (click)="addRoom()">
+                    <i class="ri-add-line me-1"></i>Add Room
+                  </button>
+                </div>
+              </div>
+
+              @if (customerRooms.length) {
+                <div class="row g-2 mb-3">
+                  <div class="col-6 col-md-3">
+                    <div class="room-summary-card"><strong>{{ customerRooms.length }}</strong><span>Total rooms</span></div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="room-summary-card text-success"><strong>{{ occupiedRoomCount }}</strong><span>Occupied</span></div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="room-summary-card text-secondary"><strong>{{ vacantRoomCount }}</strong><span>Vacant</span></div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="room-summary-card text-primary"><strong>UGX {{ expectedRoomRevenue | number:'1.0-0' }}</strong><span>Expected revenue</span></div>
+                  </div>
+                </div>
+              }
+
+              <div class="d-flex flex-column gap-3">
+                @for (room of customerRooms; track room.id || $index) {
+                  <div class="room-editor-card">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="room-number-badge">{{ $index + 1 }}</span>
+                        <div>
+                          <h6 class="mb-0">{{ room.room_number || 'New room' }}</h6>
+                          <small class="text-muted">{{ room.occupancy_status }}</small>
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-soft-danger" (click)="removeRoom($index)">
+                        <i class="ri-delete-bin-line me-1"></i>Remove
+                      </button>
+                    </div>
+
+                    <div class="row g-3">
+                      <div class="col-md-3">
+                        <label [for]="'room-number-' + $index" class="form-label">Room Number <span class="text-danger">*</span></label>
+                        <input [id]="'room-number-' + $index" [name]="'room_number_' + $index"
+                          type="text" class="form-control" [(ngModel)]="room.room_number" required maxlength="80">
+                      </div>
+                      <div class="col-md-3">
+                        <label [for]="'room-occupancy-' + $index" class="form-label">Occupancy <span class="text-danger">*</span></label>
+                        <select [id]="'room-occupancy-' + $index" [name]="'room_occupancy_' + $index"
+                          class="form-select" [(ngModel)]="room.occupancy_status"
+                          (ngModelChange)="onRoomOccupancyChange(room)" required>
+                          <option value="Vacant">Vacant</option>
+                          <option value="Occupied">Occupied</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label [for]="'room-tenant-' + $index" class="form-label">
+                          Tenant Name
+                          @if (room.occupancy_status === 'Occupied') { <span class="text-danger">*</span> }
+                        </label>
+                        <input [id]="'room-tenant-' + $index" [name]="'room_tenant_' + $index"
+                          type="text" class="form-control" [(ngModel)]="room.occupant_name"
+                          [disabled]="room.occupancy_status === 'Vacant'"
+                          [required]="room.occupancy_status === 'Occupied'"
+                          minlength="2" maxlength="160">
+                      </div>
+                      <div class="col-md-3">
+                        <label [for]="'room-phone-' + $index" class="form-label">
+                          Tenant Telephone
+                          @if (dealsDirectlyWithTenants && room.occupancy_status === 'Occupied') { <span class="text-danger">*</span> }
+                        </label>
+                        <input [id]="'room-phone-' + $index" [name]="'room_phone_' + $index"
+                          type="tel" class="form-control" [(ngModel)]="room.phone_number"
+                          [disabled]="room.occupancy_status === 'Vacant'"
+                          [required]="dealsDirectlyWithTenants && room.occupancy_status === 'Occupied'"
+                          pattern="^07[0-9]{8}$" maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX">
+                      </div>
+                      <div class="col-md-3">
+                        <label [for]="'room-email-' + $index" class="form-label">Tenant Email</label>
+                        <input [id]="'room-email-' + $index" [name]="'room_email_' + $index"
+                          type="email" class="form-control" [(ngModel)]="room.email"
+                          [disabled]="room.occupancy_status === 'Vacant'" email>
+                      </div>
+                      <div class="col-md-3">
+                        <label [for]="'room-bags-' + $index" class="form-label">Number of Bags</label>
+                        <input [id]="'room-bags-' + $index" [name]="'room_bags_' + $index"
+                          type="number" class="form-control" [(ngModel)]="room.number_of_bags"
+                          min="0" step="1" pattern="^[0-9]+$" inputmode="numeric">
+                      </div>
+                      @if (dealsDirectlyWithTenants && customerForm.room_pricing_mode === 'PER_ROOM') {
+                        <div class="col-md-4">
+                          <label [for]="'room-plan-' + $index" class="form-label">
+                            Subscription Plan
+                            @if (room.occupancy_status === 'Occupied') { <span class="text-danger">*</span> }
+                          </label>
+                          <select [id]="'room-plan-' + $index" [name]="'room_plan_' + $index"
+                            class="form-select" [(ngModel)]="room.subscription_plan_id"
+                            [disabled]="room.occupancy_status === 'Vacant'"
+                            [required]="room.occupancy_status === 'Occupied'">
+                            <option value="" disabled>Select a subscription plan</option>
+                            @for (plan of subscriptionPlans; track plan.id) {
+                              <option [value]="plan.id">{{ subscriptionPlanLabel(plan) }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="col-md-2">
+                          <label [for]="'room-price-' + $index" class="form-label">Price Override</label>
+                          <div class="input-group">
+                            <span class="input-group-text">UGX</span>
+                            <input [id]="'room-price-' + $index" [name]="'room_price_' + $index"
+                              type="number" class="form-control" [(ngModel)]="room.price"
+                              [disabled]="room.occupancy_status === 'Vacant'" min="0" step="0.01">
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="col-md-6 d-flex align-items-end">
+                          <div class="alert alert-light border mb-0 py-2 w-100">
+                            <i class="ri-links-line me-1"></i>
+                            Uses the property plan: <strong>{{ roomPlanLabel(room) }}</strong>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="empty-rooms-state">
+                    <i class="ri-home-4-line"></i>
+                    <h6>No rooms added</h6>
+                    <p>Add rooms individually or generate a numbered list.</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+        }
+        @if (customerFormStep === 3) {
         <div class="col-12">
-          <label class="form-label">Attachment</label>
-          <input
-            #attachmentInput
-            id="customer-attachment"
-            name="attachment"
-            type="file"
-            class="form-control"
-            accept="application/pdf,.pdf"
-            (change)="onAttachmentSelected($event)"
-            hidden>
+          <div class="row g-3">
+            <div class="col-12 col-md-5">
+              <label class="form-label">Attachment</label>
+              <input
+                #attachmentInput
+                id="customer-attachment"
+                name="attachment"
+                type="file"
+                class="form-control"
+                accept="application/pdf,.pdf"
+                (change)="onAttachmentSelected($event)"
+                hidden>
 
-          <div
-            class="customer-attachment-dropzone"
-            [class.drag-active]="isAttachmentDragActive"
-            [class.has-error]="!!attachmentError"
-            role="button"
-            tabindex="0"
-            aria-label="Upload customer PDF attachment"
-            (click)="attachmentInput.click()"
-            (keydown.enter)="attachmentInput.click()"
-            (keydown.space)="$event.preventDefault(); attachmentInput.click()"
-            (dragenter)="onAttachmentDragOver($event)"
-            (dragover)="onAttachmentDragOver($event)"
-            (dragleave)="onAttachmentDragLeave($event)"
-            (drop)="onAttachmentDropped($event)">
-            @if (selectedAttachment) {
-              <div class="attachment-icon mx-auto mb-3">
-                <i class="ri-file-pdf-2-line"></i>
+              <div
+                class="customer-attachment-dropzone"
+                [class.drag-active]="isAttachmentDragActive"
+                [class.has-error]="!!attachmentError"
+                role="button"
+                tabindex="0"
+                aria-label="Upload customer PDF attachment"
+                (click)="attachmentInput.click()"
+                (keydown.enter)="attachmentInput.click()"
+                (keydown.space)="$event.preventDefault(); attachmentInput.click()"
+                (dragenter)="onAttachmentDragOver($event)"
+                (dragover)="onAttachmentDragOver($event)"
+                (dragleave)="onAttachmentDragLeave($event)"
+                (drop)="onAttachmentDropped($event)">
+                @if (selectedAttachment) {
+                  <div class="attachment-icon mx-auto mb-2">
+                    <i class="ri-file-pdf-2-line"></i>
+                  </div>
+                  <h6 class="mb-1 text-break">{{ selectedAttachment.name }}</h6>
+                  <p class="text-muted mb-0 fs-12">
+                    {{ (selectedAttachment.size / 1024 / 1024) | number:'1.1-2' }} MB · Drop or click to replace
+                  </p>
+                } @else {
+                  <div class="upload-icon mx-auto mb-2">
+                    <i class="ri-upload-cloud-2-line"></i>
+                  </div>
+                  <h6 class="mb-1">Drop PDF here</h6>
+                  <p class="text-muted mb-0 fs-12">or click to browse</p>
+                }
               </div>
-              <h5 class="fs-15 mb-1 text-break">{{ selectedAttachment.name }}</h5>
-              <p class="text-muted mb-0 fs-12">
-                {{ (selectedAttachment.size / 1024 / 1024) | number:'1.1-2' }} MB · Drop another PDF or click to replace
-              </p>
-            } @else {
-              <div class="upload-icon mx-auto mb-3">
-                <i class="ri-upload-cloud-2-line"></i>
-              </div>
-              <h5 class="fs-15 mb-1">Drop the customer attachment here</h5>
-              <p class="text-muted mb-0">or click to browse</p>
-            }
-          </div>
 
-          <div class="form-text">
-            Accepted format: PDF only. Maximum size: 5 MB.
+              <div class="form-text">PDF only. Maximum size: 5 MB.</div>
+              @if (attachmentError) {
+                <div class="mt-2 text-danger">{{ attachmentError }}</div>
+              }
+              @if (selectedAttachment) {
+                <button type="button" class="btn btn-sm btn-soft-danger mt-2" (click)="removeAttachment(attachmentInput)">
+                  <i class="ri-delete-bin-line me-1"></i>Remove attachment
+                </button>
+              }
+            </div>
+            <div class="col-12 col-md-7">
+              <label for="customer-notes" class="form-label">Notes</label>
+              <textarea
+                id="customer-notes"
+                name="notes"
+                class="form-control customer-notes"
+                rows="5"
+                maxlength="1000"
+                [(ngModel)]="customerForm.notes"
+                placeholder="Enter additional customer information, collection instructions or remarks"></textarea>
+              <div class="form-text text-end">{{ customerForm.notes.length }}/1000</div>
+            </div>
           </div>
-          @if (attachmentError) {
-            <div class="mt-2 text-danger">{{ attachmentError }}</div>
-          }
-          @if (selectedAttachment) {
-            <button type="button" class="btn btn-sm btn-soft-danger mt-2" (click)="removeAttachment(attachmentInput)">
-              <i class="ri-delete-bin-line me-1"></i>Remove attachment
-            </button>
-          }
         </div>
+        }
       </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-light" (click)="modal.close('Close')">Cancel</button>
-      <button type="submit" class="btn btn-success" [disabled]="form.invalid || isSaving">
-        @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
-        {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
-      </button>
+      <div class="d-flex gap-2 ms-auto">
+        @if (customerFormStep > 1) {
+          <button type="button" class="btn btn-outline-secondary" [disabled]="isSaving" (click)="previousCustomerStep()">
+            <i class="ri-arrow-left-line me-1"></i>Previous
+          </button>
+        }
+        @if (customerFormStep < 3) {
+          <button type="button" class="btn btn-success" [disabled]="isCustomPlanPanelOpen" (click)="nextCustomerStep()">
+            Next<i class="ri-arrow-right-line ms-1"></i>
+          </button>
+        } @else {
+          <button type="submit" class="btn btn-success" [disabled]="isSaving || isCustomPlanPanelOpen">
+            @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
+          </button>
+        }
+      </div>
+    </div>
+    </fieldset>
+  </form>
+</ng-template>
+
+<ng-template #customSubscriptionOffcanvas let-offcanvas>
+  <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
+    <div>
+      <h5 class="m-0 text-white">Custom Subscription</h5>
+      <small class="text-white-50">Create a plan for this client</small>
+    </div>
+    <button
+      type="button"
+      class="btn-close btn-close-white ms-auto"
+      aria-label="Close"
+      [disabled]="isSavingCustomPlan"
+      (click)="offcanvas.dismiss('Close')"></button>
+  </div>
+
+  <form #customPlanFormRef="ngForm" class="d-flex flex-column flex-grow-1 overflow-hidden" (ngSubmit)="saveCustomSubscription(offcanvas)">
+    <div class="offcanvas-body overflow-auto">
+      <div class="mb-4">
+        <h6 class="mb-1 fw-semibold text-uppercase">Plan Details</h6>
+        <p class="text-muted mb-0">Enter the subscription arrangement agreed with the client.</p>
+      </div>
+
+      <div class="mb-3">
+        <label for="custom-plan-duration" class="form-label">Duration <span class="text-danger">*</span></label>
+        <select
+          id="custom-plan-duration"
+          name="customPlanDuration"
+          class="form-select"
+          [(ngModel)]="customPlanForm.duration"
+          required>
+          @for (duration of customDurationOptions; track duration) {
+            <option [value]="duration">{{ duration }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="custom-plan-frequency" class="form-label">Pickup Frequency <span class="text-danger">*</span></label>
+        <select
+          id="custom-plan-frequency"
+          name="customPlanFrequency"
+          class="form-select"
+          [(ngModel)]="customPlanForm.pickup_frequency"
+          required>
+          @for (frequency of customPickupFrequencyOptions; track frequency) {
+            <option [value]="frequency">{{ frequency }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="custom-plan-amount" class="form-label">Amount <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text">UGX</span>
+          <input
+            id="custom-plan-amount"
+            name="customPlanAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            class="form-control"
+            [(ngModel)]="customPlanForm.amount"
+            required>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label d-block">Custom Plan</label>
+          <div class="form-check form-switch mt-2">
+            <input id="custom-plan-custom" class="form-check-input" type="checkbox" checked disabled>
+            <label class="form-check-label" for="custom-plan-custom">Custom</label>
+          </div>
+        </div>
+        <div class="col-6">
+          <label class="form-label d-block">Status</label>
+          <div class="form-check form-switch mt-2">
+            <input id="custom-plan-active" class="form-check-input" type="checkbox" checked disabled>
+            <label class="form-check-label" for="custom-plan-active">Active</label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label for="custom-plan-notes" class="form-label">Notes</label>
+        <textarea
+          id="custom-plan-notes"
+          name="customPlanNotes"
+          rows="4"
+          maxlength="500"
+          class="form-control"
+          placeholder="Optional notes"
+          [(ngModel)]="customPlanForm.notes"></textarea>
+      </div>
+    </div>
+
+    <div class="border-top p-3 mt-auto bg-body">
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-light w-50" [disabled]="isSavingCustomPlan" (click)="offcanvas.dismiss('Cancel')">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-success w-50" [disabled]="customPlanFormRef.invalid || isSavingCustomPlan">
+          @if (isSavingCustomPlan) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          Create & Select
+        </button>
+      </div>
     </div>
   </form>
 </ng-template>

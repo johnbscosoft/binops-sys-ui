@@ -1,0 +1,13 @@
+.table th {
+  white-space: nowrap;
+}
+
+.category-icon {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  color: var(--vz-success);
+  background: var(--vz-success-bg-subtle);
+  border-radius: 0.5rem;
+  place-items: center;
+}

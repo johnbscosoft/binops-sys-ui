@@ -23,19 +23,42 @@ export const MENU: MenuItem[] = [
     ['Overview', 'overview'],
     ['Key Metrics', 'key-metrics']
   ]),
-  menu(20, 'Customer Management', 'ri-user-3-line', '/customers', [
-    ['Customers', 'list'],
-    ['Customer Details', 'details'],
-    ['Customer Contracts', 'contracts'],
-    ['Customer Locations', 'locations'],
-    ['QR Codes', 'qr-codes']
-  ]),
+  {
+    id: 20,
+    label: 'Customer Management',
+    icon: 'ri-user-3-line',
+    isCollapsed: true,
+    subItems: [
+      { id: 2001, label: 'Customers', link: '/customers/list', parentId: 20 },
+      { id: 2002, label: 'Properties', link: '/customers/properties', parentId: 20 },
+      // Not yet implemented:
+      // { id: 2003, label: 'Customer Details', link: '/customers/details', parentId: 20 },
+      { id: 2004, label: 'Customer Contracts', link: '/customers/contracts', parentId: 20 },
+      // { id: 2005, label: 'Customer Locations', link: '/customers/locations', parentId: 20 },
+      // { id: 2006, label: 'QR Codes', link: '/customers/qr-codes', parentId: 20 },
+      {
+        id: 2007,
+        label: 'Reports',
+        parentId: 20,
+        isCollapsed: true,
+        subItems: [
+          { id: 200701, label: 'Customer Summary', link: '/customers/reports/summary', parentId: 2007 },
+          { id: 200702, label: 'Customer Status', link: '/customers/reports/status', parentId: 2007 },
+          { id: 200703, label: 'Property Occupancy', link: '/customers/reports/property-occupancy', parentId: 2007 },
+          { id: 200704, label: 'Property Collection Register', link: '/customers/reports/property-collections', parentId: 2007 },
+          { id: 200705, label: 'Customer Subscriptions', link: '/customers/reports/subscriptions', parentId: 2007 }
+        ]
+      }
+    ]
+  },
   menu(30, 'Subscriptions', 'ri-repeat-2-line', '/subscriptions', [
-    ['Active Subscriptions', 'active'],
-    ['Expiring Subscriptions', 'expiring'],
+    // Not yet implemented:
+    // ['Active Subscriptions', 'active'],
+    // ['Expiring Subscriptions', 'expiring'],
     ['Subscription Plans', 'plans'],
-    ['Renewal History', 'renewal-history']
+    // ['Renewal History', 'renewal-history']
   ]),
+  /* Modules below are hidden until their pages and routes are implemented.
   menu(40, 'Waste Collection Operations', 'ri-recycle-line', '/collections', [
     ['Collection Schedule', 'schedule'],
     ['Collection Routes', 'routes'],
@@ -74,13 +97,15 @@ export const MENU: MenuItem[] = [
     ['Email Notifications', 'email'],
     ['Payment Alerts', 'payment-alerts'],
     ['Collection Alerts', 'collection-alerts']
-  ]),
+  ]), */
   menu(100, 'Administration', 'ri-settings-3-line', '/administration', [
     ['Users', 'users'],
-    ['Roles & Permissions', 'roles-permissions'],
+    // Not yet implemented:
+    // ['Roles & Permissions', 'roles-permissions'],
     ['Company Settings', 'company-settings'],
+    ['Client Categories', 'client-categories'],
     ['Authentication Settings', 'authentication-settings'],
-    ['System Settings', 'system-settings'],
-    ['Audit Logs', 'audit-logs']
+    // ['System Settings', 'system-settings'],
+    // ['Audit Logs', 'audit-logs']
   ])
 ];

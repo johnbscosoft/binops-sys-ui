@@ -32,10 +32,13 @@ import { SubscriptionsComponent } from './subscriptions/subscriptions.component'
 import { UsersComponent } from './users/users.component';
 import { ContractsComponent } from './contracts/contracts.component';
 import { AuthenticationSettingsComponent } from './authentication-settings/authentication-settings.component';
+import { ClientCategoriesComponent } from './client-categories/client-categories.component';
+import { PropertiesComponent } from './properties/properties.component';
+import { CustomerReportsComponent } from './customer-reports/customer-reports.component';
 
 
 @NgModule({
-  declarations: [CustomersComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent],
+  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent],
   imports: [
     CommonModule,
     FormsModule,

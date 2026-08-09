@@ -125,7 +125,7 @@
     <div class="modal-body">
       <div class="row g-3">
         <div class="col-md-6">
-          <label for="user-company-code" class="form-label">Company Code</label>
+          <label for="user-company-code" class="form-label">Company Code <span class="text-danger">*</span></label>
           @if (editingUser) {
             <input id="user-company-code" name="companyCode" class="form-control" [(ngModel)]="userForm.company_code" readonly required>
           } @else {
@@ -139,7 +139,7 @@
         </div>
         @if (!editingUser) {
           <div class="col-md-6">
-            <label for="user-default-password" class="form-label">Default Password</label>
+            <label for="user-default-password" class="form-label">Default Password <span class="text-danger">*</span></label>
             <input id="user-default-password" class="form-control" [value]="defaultPassword" readonly>
             <div class="form-text">Ask the user to change this password after signing in.</div>
           </div>
