@@ -457,7 +457,7 @@ $spacers: (
   5: $spacer * 3,
 );
 
-$negative-spacers: if($enable-negative-margins, negativify-map($spacers), null);
+$negative-spacers: if(sass($enable-negative-margins): negativify-map($spacers));
 // scss-docs-end spacer-variables-maps
 
 // Position
