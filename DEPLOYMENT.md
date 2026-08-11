@@ -15,10 +15,10 @@ Pull request
   → Verify container health
 ```
 
-The Docker Hub image is:
+The shared Docker Hub image repository is:
 
 ```text
-jbscosoft/binops-sys-ui
+jbscosoft/binops-sys
 ```
 
 The current legacy component suite contains TestBed setup failures. The workflow
@@ -28,7 +28,7 @@ test step after those specs have been corrected.
 
 ## 1. Docker Hub and GitHub
 
-Create `jbscosoft/binops-sys-ui` in Docker Hub. Ensure the existing GitHub
+Create `jbscosoft/binops-sys` in Docker Hub. Ensure the existing GitHub
 Actions secret `DOCKERHUB_TOKEN` has read/write access to it.
 
 Create a GitHub environment named `production`. Optionally add required
@@ -99,9 +99,9 @@ docker login --username jbscosoft
 
 ```bash
 cd /opt/binops-sys-ui
-UI_IMAGE_TAG=latest docker compose -f compose-ui.yaml pull ui
-UI_IMAGE_TAG=latest docker compose -f compose-ui.yaml up -d --remove-orphans ui
-docker compose -f compose-ui.yaml ps
+UI_IMAGE_TAG=ui-latest docker compose -f compose.yaml pull ui
+UI_IMAGE_TAG=ui-latest docker compose -f compose.yaml up -d --remove-orphans ui
+docker compose -f compose.yaml ps
 ```
 
 The UI is bound to `127.0.0.1:8080` by default for a host-level Nginx, Caddy, or
@@ -118,10 +118,8 @@ API_UPSTREAM=http://your-api:8001 docker compose -f compose.yaml up -d ui
 
 The workflow publishes:
 
-- `sha-<full-commit>` for production deployment and rollback.
-- `main`, `master`, or `testenv` for branch builds.
-- `latest` only for `main`.
-- semantic-version tags for Git tags such as `v1.2.0`.
+- `ui-YYYYMMDD-HHMMSS`, generated from the UTC build datetime, for deployment and rollback.
+- `ui-latest` additionally for successful builds from `main`.
 
 ## 5. Verification and rollback
 
@@ -134,7 +132,7 @@ docker compose -f compose.yaml logs --tail=100 ui
 To roll back, put the previous immutable tag in `.deploy.env`:
 
 ```env
-UI_IMAGE_TAG=sha-previous-full-commit
+UI_IMAGE_TAG=ui-20260811-143025
 ```
 
 Then run:
