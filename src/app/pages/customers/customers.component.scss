@@ -101,80 +101,11 @@
   white-space: pre-wrap;
 }
 
-.property-setup-section,
 .rooms-section {
   padding: 1.25rem;
   border: 1px solid var(--vz-border-color);
   border-radius: 0.5rem;
   background: var(--vz-secondary-bg);
-}
-
-.arrangement-option {
-  position: relative;
-  width: 100%;
-  min-height: 108px;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-  padding: 1rem;
-  border: 1px solid var(--vz-border-color);
-  border-radius: 0.5rem;
-  background: var(--vz-body-bg);
-  color: var(--vz-body-color);
-  text-align: left;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--vz-success);
-    box-shadow: 0 0 0 0.2rem rgba(var(--vz-success-rgb), 0.1);
-    outline: none;
-  }
-
-  &.active {
-    border-color: var(--vz-success);
-    background: rgba(var(--vz-success-rgb), 0.07);
-
-    .selection-icon {
-      opacity: 1;
-    }
-  }
-
-  strong,
-  small {
-    display: block;
-  }
-
-  small {
-    margin-top: 0.35rem;
-    color: var(--vz-secondary-color);
-    line-height: 1.45;
-  }
-
-  .arrangement-icon {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(var(--vz-success-rgb), 0.12);
-    color: var(--vz-success);
-    font-size: 1.25rem;
-  }
-
-  .selection-icon {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    color: var(--vz-success);
-    opacity: 0;
-  }
-}
-
-.pricing-mode-group {
-  flex-wrap: wrap;
 }
 
 .room-summary-card {
