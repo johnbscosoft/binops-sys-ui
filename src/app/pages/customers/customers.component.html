@@ -5,7 +5,10 @@
     <div class="card">
       <div class="card-header border-bottom-dashed">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-          <h5 class="card-title mb-0">Customer List</h5>
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title mb-0">Customer List</h5>
+            <span class="badge bg-primary-subtle text-primary fs-12">Total: {{ customers.length }}</span>
+          </div>
           <button type="button" class="btn btn-success" (click)="openAddCustomer(customerModal)">
             <i class="ri-add-line align-bottom me-1"></i> Add Client
           </button>
