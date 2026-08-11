@@ -121,7 +121,7 @@ export class CustomersComponent implements OnInit {
   customers: Client[] = [];
   searchTerm = '';
   page = 1;
-  pageSize = 5;
+  pageSize = 10;
   isLoading = true;
   isSaving = false;
   customerFormStep: 1 | 2 | 3 = 1;
