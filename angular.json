@@ -84,6 +84,7 @@
               "ngx-csv/ngx-csv",
               "dropzone",
               "file-saver",
+              "qrcode",
               "prismjs",
               "slick-carousel"
             ],

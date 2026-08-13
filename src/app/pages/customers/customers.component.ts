@@ -2,6 +2,7 @@
 
 import { Component, ElementRef, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal, NgbModalRef, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import QRCode from 'qrcode';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
 import {
@@ -132,6 +133,9 @@ export class CustomersComponent implements OnInit {
   ] as const;
   editingCustomer: Client | null = null;
   selectedCustomer: Client | null = null;
+  selectedQrCustomer: Client | null = null;
+  customerQrCodeDataUrl = '';
+  isGeneratingCustomerQr = false;
   customerForm: ClientForm = this.emptyForm();
   customerRooms: CustomerRoomForm[] = [];
   selectedAttachment: File | null = null;
@@ -648,6 +652,156 @@ export class CustomersComponent implements OnInit {
   openCustomerDetails(content: TemplateRef<unknown>, customer: Client): void {
     this.selectedCustomer = customer;
     this.modalService.open(content, { centered: true, size: 'xl', scrollable: true });
+  }
+
+  openCustomerQrCode(content: TemplateRef<unknown>, customer: Client): void {
+    this.selectedQrCustomer = customer;
+    this.customerQrCodeDataUrl = '';
+    this.isGeneratingCustomerQr = true;
+    this.modalService.open(content, { centered: true, size: 'sm' });
+    void this.generateCustomerQrCode(customer.customer_id);
+  }
+
+  downloadCustomerQrCode(): void {
+    if (!this.selectedQrCustomer || !this.customerQrCodeDataUrl) return;
+    const link = document.createElement('a');
+    link.href = this.customerQrCodeDataUrl;
+    link.download = `${this.selectedQrCustomer.customer_id}-qr-code.png`;
+    link.click();
+  }
+
+  printCustomerQrCode(): void {
+    if (!this.selectedQrCustomer || !this.customerQrCodeDataUrl) return;
+    const printWindow = window.open('', '_blank', 'width=520,height=620');
+    if (!printWindow) {
+      void Swal.fire({
+        title: 'Unable to print QR code',
+        text: 'Allow pop-ups for this site, then try again.',
+        icon: 'warning',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+    const customerName = this.escapeHtml(this.selectedQrCustomer.name);
+    const customerCode = this.escapeHtml(this.selectedQrCustomer.customer_id);
+    printWindow.document.write(`<!doctype html><html><head><title>${customerCode} QR Code</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:40px;color:#212529}img{width:320px;height:320px}h2{margin-bottom:4px}p{font-size:20px;font-weight:700;margin-top:8px}@media print{body{padding:0}}</style></head><body><h2>${customerName}</h2><p>${customerCode}</p><img src="${this.customerQrCodeDataUrl}" alt="QR code for ${customerCode}"></body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
+  }
+
+  async printAllCustomerQrCodes(): Promise<void> {
+    if (!this.customers.length) {
+      void Swal.fire({
+        title: 'No customer QR codes',
+        text: 'There are no customers available to print.',
+        icon: 'info',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+    if (!printWindow) {
+      void Swal.fire({
+        title: 'Unable to print QR codes',
+        text: 'Allow pop-ups for this site, then try again.',
+        icon: 'warning',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+
+    printWindow.document.write('<!doctype html><html><head><title>Customer QR Codes</title></head><body style="font-family:Arial,sans-serif;text-align:center;padding:40px"><h2>Generating customer QR codes...</h2></body></html>');
+    printWindow.document.close();
+
+    try {
+      const qrCodes = await Promise.all(this.customers.map(async (customer) => ({
+        customer,
+        dataUrl: await QRCode.toDataURL(customer.customer_id, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          width: 320,
+          color: { dark: '#000000', light: '#ffffff' }
+        })
+      })));
+      const pages = Array.from(
+        { length: Math.ceil(qrCodes.length / 6) },
+        (_, pageIndex) => qrCodes.slice(pageIndex * 6, pageIndex * 6 + 6)
+      );
+      const pageMarkup = pages.map((page, pageIndex) => `
+        <section class="qr-page${pageIndex === pages.length - 1 ? ' last-page' : ''}">
+          ${page.map(({ customer, dataUrl }) => `
+            <article class="qr-label">
+              <img src="${dataUrl}" alt="QR code for ${this.escapeHtml(customer.customer_id)}">
+              <div class="customer-code">${this.escapeHtml(customer.customer_id)}</div>
+            </article>
+          `).join('')}
+        </section>
+      `).join('');
+
+      printWindow.document.open();
+      printWindow.document.write(`<!doctype html>
+        <html>
+          <head>
+            <title>Customer QR Codes</title>
+            <style>
+              @page { size: A4 portrait; margin: 10mm; }
+              * { box-sizing: border-box; }
+              html, body { margin: 0; padding: 0; color: #111827; font-family: Arial, sans-serif; }
+              .qr-page { width: 190mm; height: 255mm; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 80mm); align-content: start; gap: 4mm; overflow: hidden; break-inside: avoid; page-break-inside: avoid; break-after: page; page-break-after: always; }
+              .qr-page.last-page { break-after: auto; page-break-after: auto; }
+              .qr-label { display: flex; min-width: 0; height: 80mm; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; padding: 4mm; border: 1px dashed #9ca3af; border-radius: 3mm; break-inside: avoid; page-break-inside: avoid; text-align: center; }
+              .qr-label img { width: 46mm; height: 46mm; max-width: 100%; object-fit: contain; }
+              .customer-code { margin-top: 3mm; color: #166534; font-size: 14pt; font-weight: 700; letter-spacing: .5px; }
+              @media screen { body { width: 210mm; margin: 0 auto; padding: 10mm; background: #e5e7eb; } .qr-page { margin-bottom: 10mm; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.12); } }
+              @media print { .qr-page { margin: 0; } }
+            </style>
+          </head>
+          <body>${pageMarkup}</body>
+        </html>`);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+    } catch {
+      printWindow.close();
+      void Swal.fire({
+        title: 'QR-code PDF preparation failed',
+        text: 'The customer QR codes could not be prepared. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#f06548'
+      });
+    }
+  }
+
+  private async generateCustomerQrCode(customerCode: string): Promise<void> {
+    try {
+      this.customerQrCodeDataUrl = await QRCode.toDataURL(customerCode, {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 360,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+    } catch {
+      void Swal.fire({
+        title: 'QR code generation failed',
+        text: 'The customer QR code could not be generated. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#f06548'
+      });
+    } finally {
+      this.isGeneratingCustomerQr = false;
+    }
+  }
+
+  private escapeHtml(value: string): string {
+    return value.replace(/[&<>'"]/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    })[character]!);
   }
 
   selectedCustomerPlanLabel(customer: Client): string {
