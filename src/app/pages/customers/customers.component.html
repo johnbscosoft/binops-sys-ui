@@ -259,14 +259,6 @@
             <div class="detail-value text-pre-wrap">{{ customer.notes }}</div>
           </div>
         }
-        <div class="col-md-6">
-          <div class="detail-label">Flat Number</div>
-          <div class="detail-value">{{ customer.flat_no || '—' }}</div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-label">House Number</div>
-          <div class="detail-value">{{ customer.house_no || '—' }}</div>
-        </div>
         @if (customer.latitude !== null && customer.longitude !== null) {
           <div class="col-md-6">
             <div class="detail-label">Latitude</div>
@@ -395,18 +387,7 @@
       [attr.inert]="isCustomPlanPanelOpen ? '' : null"
       [attr.aria-disabled]="isCustomPlanPanelOpen">
     <div class="modal-body customer-form-scroll">
-      <div class="customer-stepper mb-4" aria-label="Customer form progress">
-        @for (step of customerFormSteps; track step.number) {
-          <div class="customer-step" [class.active]="customerFormStep === step.number" [class.completed]="customerFormStep > step.number">
-            <span class="step-number">
-              @if (customerFormStep > step.number) { <i class="ri-check-line"></i> } @else { {{ step.number }} }
-            </span>
-            <span class="step-label">{{ step.label }}</span>
-          </div>
-        }
-      </div>
       <div class="row g-3">
-        @if (customerFormStep === 1) {
         <div class="col-12 col-md-6">
           <label for="customer-category" class="form-label">Client Category <span class="text-danger">*</span></label>
           <select
@@ -433,10 +414,46 @@
           }
           @if (isPropertyCustomer) {
             <div class="form-text text-success">
-              <i class="ri-building-line me-1"></i>Property and room details will be available in the Service &amp; Property step.
+              <i class="ri-building-line me-1"></i>Select the property and room below. Its location is used automatically.
             </div>
           }
         </div>
+        @if (isPropertyCustomer) {
+          <div class="col-12 col-md-6">
+            <label for="customer-property" class="form-label">Apartment / Property <span class="text-danger">*</span></label>
+            <select id="customer-property" name="property_id" class="form-select"
+              [ngModel]="customerForm.property_id" (ngModelChange)="onPropertyChange($event)"
+              [disabled]="propertiesLoading" required>
+              <option value="" disabled>{{ propertiesLoading ? 'Loading properties...' : 'Select an apartment / property' }}</option>
+              @for (property of matchingProperties; track property.id) {
+                <option [value]="property.id">{{ property.name }}</option>
+              }
+            </select>
+            @if (!propertiesLoading && !matchingProperties.length) {
+              <div class="form-text text-warning">No matching properties are configured. Add one from Customer Management → Properties.</div>
+            } @else if (selectedProperty?.location) {
+              <div class="form-text text-success"><i class="ri-map-pin-line me-1"></i>Location inherited: {{ selectedProperty?.location }}</div>
+            }
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="customer-property-unit" class="form-label">Room Number <span class="text-danger">*</span></label>
+            <select id="customer-property-unit" name="property_unit_id" class="form-select"
+              [(ngModel)]="customerForm.property_unit_id"
+              [disabled]="!customerForm.property_id || propertyUnitsLoading" required>
+              <option value="" disabled>{{ propertyUnitsLoading ? 'Loading available rooms...' : 'Select a room' }}</option>
+              @for (unit of availablePropertyUnits; track unit.id) {
+                <option [value]="unit.id">{{ unit.room_number }}</option>
+              }
+            </select>
+            @if (customerForm.property_id && !propertyUnitsLoading && !availablePropertyUnits.length) {
+              <div class="form-text text-warning">No vacant configured rooms are available.</div>
+            }
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="occupancy-start-date" class="form-label">Occupancy Start Date</label>
+            <input id="occupancy-start-date" name="occupancy_start_date" type="date" class="form-control" [(ngModel)]="customerForm.occupancy_start_date">
+          </div>
+        }
         <div class="col-12 col-md-6">
           <label for="customer-name" class="form-label">Name <span class="text-danger">*</span></label>
           <input id="customer-name" name="name" type="text" class="form-control"
@@ -450,35 +467,33 @@
           }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+          <label for="customer-phone" class="form-label">Phone Number</label>
           <input id="customer-phone" name="phone_no" type="tel" class="form-control"
-            [(ngModel)]="customerForm.phone_no" #phoneControl="ngModel" required
+            [(ngModel)]="customerForm.phone_no" #phoneControl="ngModel"
             pattern="^07[0-9]{8}$" maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX"
             [class.is-invalid]="phoneControl.invalid && phoneControl.touched">
           @if (phoneControl.invalid && phoneControl.touched) {
             <div class="invalid-feedback">
-              @if (phoneControl.errors?.['required']) { Phone number is required. }
-              @else { Enter 10 digits starting with 07, for example 0772123456. }
+              Enter 10 digits starting with 07, for example 0772123456.
             </div>
           }
         </div>
         <div class="col-12 col-md-6">
-          <label for="customer-email" class="form-label">Email <span class="text-danger">*</span></label>
+          <label for="customer-email" class="form-label">Email</label>
           <input id="customer-email" name="email" type="email" class="form-control"
-            [(ngModel)]="customerForm.email" #emailControl="ngModel" email required
+            [(ngModel)]="customerForm.email" #emailControl="ngModel" email
             [class.is-invalid]="emailControl.invalid && emailControl.touched">
           @if (emailControl.invalid && emailControl.touched) {
             <div class="invalid-feedback">
-              @if (emailControl.errors?.['required']) { Email is required. }
-              @else { Enter a valid email address. }
+              Enter a valid email address.
             </div>
           }
         </div>
+        @if (!isPropertyCustomer) {
         <div class="col-12 col-md-6">
           <label for="customer-location" class="form-label">
             Location
-            @if (!isPropertyCustomer) { <span class="text-danger">*</span> }
-            @else { <span class="text-muted fs-12">(inherited from property)</span> }
+            <span class="text-danger">*</span>
           </label>
           @if (useGoogleLocations) {
             <div id="customer-location" #locationAutocompleteContainer class="google-location-autocomplete"></div>
@@ -507,14 +522,7 @@
             <div class="form-text text-danger">{{ locationError }}</div>
           }
         </div>
-        <div class="col-12 col-md-6">
-          <label for="customer-flat-number" class="form-label">Flat Number</label>
-          <input id="customer-flat-number" name="flat_no" type="text" class="form-control" [(ngModel)]="customerForm.flat_no">
-        </div>
-        <div class="col-12 col-md-6">
-          <label for="customer-house-number" class="form-label">House Number</label>
-          <input id="customer-house-number" name="house_no" type="text" class="form-control" [(ngModel)]="customerForm.house_no">
-        </div>
+        }
         <div class="col-12 col-md-6">
           <label for="customer-number-of-bags" class="form-label">Number of Bags</label>
           <input
@@ -535,77 +543,28 @@
           }
           <div class="form-text">Optional. Defaults to 0.</div>
         </div>
-        }
-        @if (customerFormStep === 2) {
-        @if (isPropertyCustomer) {
-          <div class="col-12 col-md-6">
-            <label for="customer-property" class="form-label">Property <span class="text-danger">*</span></label>
-            <select id="customer-property" name="property_id" class="form-select"
-              [ngModel]="customerForm.property_id" (ngModelChange)="onPropertyChange($event)"
-              [disabled]="propertiesLoading" required>
-              <option value="" disabled>{{ propertiesLoading ? 'Loading properties...' : 'Select a property' }}</option>
-              @for (property of matchingProperties; track property.id) {
-                <option [value]="property.id">{{ property.name }}</option>
-              }
-            </select>
-            @if (!propertiesLoading && !matchingProperties.length) {
-              <div class="form-text text-warning">No matching properties are configured. Add one from Customer Management → Properties.</div>
-            } @else if (selectedProperty?.location) {
-              <div class="form-text text-success"><i class="ri-map-pin-line me-1"></i>Customer location: {{ selectedProperty?.location }}</div>
-            }
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="customer-property-unit" class="form-label">Room Number <span class="text-danger">*</span></label>
-            <select id="customer-property-unit" name="property_unit_id" class="form-select"
-              [(ngModel)]="customerForm.property_unit_id"
-              [disabled]="!customerForm.property_id || propertyUnitsLoading" required>
-              <option value="" disabled>{{ propertyUnitsLoading ? 'Loading available rooms...' : 'Select a room' }}</option>
-              @for (unit of availablePropertyUnits; track unit.id) {
-                <option [value]="unit.id">{{ unit.room_number }}</option>
-              }
-            </select>
-            @if (customerForm.property_id && !propertyUnitsLoading && !availablePropertyUnits.length) {
-              <div class="form-text text-warning">No vacant configured rooms are available.</div>
-            }
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="occupancy-start-date" class="form-label">Occupancy Start Date</label>
-            <input id="occupancy-start-date" name="occupancy_start_date" type="date" class="form-control" [(ngModel)]="customerForm.occupancy_start_date">
-          </div>
-          <div class="col-12 col-md-6 d-flex align-items-end">
-            <div class="alert alert-info border-0 mb-0 py-2 w-100">
-              @if (selectedProperty?.billing_mode === 'OWNER') {
-                <i class="ri-building-line me-1"></i>The property owner pays; this customer does not need a subscription.
-              } @else {
-                <i class="ri-user-line me-1"></i>This tenant pays individually and needs a subscription.
-              }
-            </div>
-          </div>
-        }
         <div class="col-12 col-md-6">
           <label for="customer-subscription-plan" class="form-label">
             Subscription Plan
             @if (defaultPlanRequired) { <span class="text-danger">*</span> }
           </label>
-          <select id="customer-subscription-plan" name="subscription_plan_id" class="form-select"
+          <ng-select id="customer-subscription-plan" name="subscription_plan_id"
             [ngModel]="customerForm.subscription_plan_id" #planControl="ngModel"
             [required]="defaultPlanRequired"
             (ngModelChange)="onSubscriptionPlanSelection($event, customSubscriptionOffcanvas)"
             [disabled]="subscriptionPlansLoading"
+            [searchable]="true"
+            [clearable]="!defaultPlanRequired"
+            [loading]="subscriptionPlansLoading"
+            [placeholder]="defaultPlanRequired ? 'Search or select a subscription plan' : 'No default plan'"
             [class.is-invalid]="planControl.invalid && planControl.touched">
-            <option value="" [disabled]="defaultPlanRequired">
-              {{ subscriptionPlansLoading
-                ? 'Loading subscription plans...'
-                : (defaultPlanRequired ? 'Select a subscription plan' : 'No default plan') }}
-            </option>
             @for (plan of subscriptionPlans; track plan.id) {
-              <option [value]="plan.id">
+              <ng-option [value]="plan.id">
                 {{ subscriptionPlanLabel(plan) }}
-              </option>
+              </ng-option>
             }
-            <option disabled>────────────────────</option>
-            <option [value]="customPlanOptionValue">＋ Add Custom Subscription...</option>
-          </select>
+            <ng-option [value]="customPlanOptionValue">＋ Add Custom Subscription...</ng-option>
+          </ng-select>
           @if (planControl.invalid && planControl.touched) {
             <div class="invalid-feedback">Subscription plan is required.</div>
           }
@@ -768,8 +727,6 @@
             </div>
           </div>
         }
-        }
-        @if (customerFormStep === 3) {
         <div class="col-12">
           <div class="row g-3">
             <div class="col-12 col-md-5">
@@ -839,27 +796,15 @@
             </div>
           </div>
         </div>
-        }
       </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-light" (click)="modal.close('Close')">Cancel</button>
       <div class="d-flex gap-2 ms-auto">
-        @if (customerFormStep > 1) {
-          <button type="button" class="btn btn-outline-secondary" [disabled]="isSaving" (click)="previousCustomerStep()">
-            <i class="ri-arrow-left-line me-1"></i>Previous
-          </button>
-        }
-        @if (customerFormStep < 3) {
-          <button type="button" class="btn btn-success" [disabled]="isCustomPlanPanelOpen" (click)="nextCustomerStep()">
-            Next<i class="ri-arrow-right-line ms-1"></i>
-          </button>
-        } @else {
-          <button type="submit" class="btn btn-success" [disabled]="isSaving || isCustomPlanPanelOpen">
-            @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
-            {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
-          </button>
-        }
+        <button type="submit" class="btn btn-success" [disabled]="isSaving || isCustomPlanPanelOpen">
+          @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
+        </button>
       </div>
     </div>
     </fieldset>

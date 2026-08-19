@@ -13,8 +13,6 @@ export interface ApiCustomer {
   latitude: number | null;
   longitude: number | null;
   place_id: string | null;
-  flat_no: string | null;
-  house_no: string | null;
   number_of_bags: number;
   notes: string | null;
   customer_type: 'STANDARD' | 'PROPERTY' | 'OCCUPANT';

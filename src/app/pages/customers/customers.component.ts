@@ -56,8 +56,6 @@ interface Client {
   latitude: number | null;
   longitude: number | null;
   place_id: string;
-  flat_no: string;
-  house_no: string;
   number_of_bags: number;
   notes: string;
   customer_type: 'STANDARD' | 'PROPERTY' | 'OCCUPANT';
@@ -89,8 +87,6 @@ type ClientForm = Pick<Client,
 'latitude' |
 'longitude' |
 'place_id' |
-'flat_no' | 
-'house_no' | 
 'number_of_bags' |
 'notes' |
 'property_id' |
@@ -125,12 +121,6 @@ export class CustomersComponent implements OnInit {
   pageSize = 10;
   isLoading = true;
   isSaving = false;
-  customerFormStep: 1 | 2 | 3 = 1;
-  readonly customerFormSteps = [
-    { number: 1, label: 'Customer Details' },
-    { number: 2, label: 'Service & Property' },
-    { number: 3, label: 'Documents & Notes' }
-  ] as const;
   editingCustomer: Client | null = null;
   selectedCustomer: Client | null = null;
   selectedQrCustomer: Client | null = null;
@@ -638,7 +628,6 @@ export class CustomersComponent implements OnInit {
 
   openAddCustomer(content: TemplateRef<unknown>): void {
     this.editingCustomer = null;
-    this.customerFormStep = 1;
     this.customerForm = this.emptyForm();
     this.customerRooms = [];
     this.selectedAttachment = null;
@@ -811,7 +800,6 @@ export class CustomersComponent implements OnInit {
 
   openEditCustomer(content: TemplateRef<unknown>, customer: Client): void {
     this.editingCustomer = customer;
-    this.customerFormStep = 1;
     this.selectedAttachment = null;
     this.attachmentError = '';
     this.isAttachmentDragActive = false;
@@ -823,8 +811,6 @@ export class CustomersComponent implements OnInit {
       latitude: customer.latitude,
       longitude: customer.longitude,
       place_id: customer.place_id,
-      flat_no: customer.flat_no,
-      house_no: customer.house_no,
       number_of_bags: customer.number_of_bags,
       notes: customer.notes,
       property_id: customer.property_id,
@@ -846,61 +832,6 @@ export class CustomersComponent implements OnInit {
     this.locationError = '';
     this.useGoogleLocations = this.googleMapsApiKeyConfigured;
     this.openCustomerModal(content);
-  }
-
-  nextCustomerStep(): void {
-    const validationMessage = this.customerFormStep === 1
-      ? this.validateCustomerDetailsStep()
-      : this.validateCustomerServiceStep();
-    if (validationMessage) {
-      void Swal.fire({
-        title: 'Complete this step',
-        text: validationMessage,
-        icon: 'warning',
-        confirmButtonColor: '#405189'
-      });
-      return;
-    }
-    if (this.customerFormStep < 3) {
-      this.customerFormStep = (this.customerFormStep + 1) as 2 | 3;
-    }
-  }
-
-  previousCustomerStep(): void {
-    if (this.customerFormStep <= 1) return;
-    this.customerFormStep = (this.customerFormStep - 1) as 1 | 2;
-    if (this.customerFormStep === 1 && this.useGoogleLocations) {
-      setTimeout(() => void this.initializeLocationAutocomplete());
-    }
-  }
-
-  private validateCustomerDetailsStep(): string | null {
-    const bags = Number(this.customerForm.number_of_bags ?? 0);
-    if (this.customerForm.name.trim().length < 2) return 'Enter a customer name of at least 2 characters.';
-    if (!/^07\d{8}$/.test(this.customerForm.phone_no.trim())) return 'Enter a valid 10-digit phone number starting with 07.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.customerForm.email.trim())) return 'Enter a valid email address.';
-    if (!this.customerForm.client_category_id) return 'Select a client category.';
-    if (!Number.isInteger(bags) || bags < 0) return 'Number of bags must be a whole number equal to zero or greater.';
-    if (!this.isPropertyCustomer && !this.customerForm.location.trim()) return 'Enter the customer location.';
-    if (!this.isPropertyCustomer && this.useGoogleLocations && (
-      this.customerForm.latitude === null ||
-      this.customerForm.longitude === null ||
-      !this.customerForm.place_id
-    )) return 'Select the location from the Google suggestions.';
-    return null;
-  }
-
-  private validateCustomerServiceStep(): string | null {
-    if (this.isPropertyCustomer) {
-      if (!this.customerForm.property_id) return 'Select a configured property.';
-      if (!this.selectedProperty) return 'The selected property is unavailable or does not match the client category.';
-      if (!this.customerForm.property_unit_id) return 'Select an available room number.';
-    }
-    if (this.defaultPlanRequired && !this.customerForm.subscription_plan_id) {
-      return 'Select a subscription plan.';
-    }
-    if (!this.customerForm.status) return 'Select the customer status.';
-    return null;
   }
 
   private openCustomerModal(content: TemplateRef<unknown>): void {
@@ -1048,7 +979,7 @@ export class CustomersComponent implements OnInit {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const numberOfBags = Number(this.customerForm.number_of_bags ?? 0);
 
-    if (!this.customerForm.location.trim()) {
+    if (!this.isPropertyCustomer && !this.customerForm.location.trim()) {
       void Swal.fire({
         title: 'Location required',
         text: this.useGoogleLocations
@@ -1076,8 +1007,8 @@ export class CustomersComponent implements OnInit {
 
     const isInvalid =
       this.customerForm.name.trim().length < 2 ||
-      !/^07\d{8}$/.test(this.customerForm.phone_no.trim()) ||
-      !emailPattern.test(this.customerForm.email.trim()) ||
+      (this.customerForm.phone_no.trim() && !/^07\d{8}$/.test(this.customerForm.phone_no.trim())) ||
+      (this.customerForm.email.trim() && !emailPattern.test(this.customerForm.email.trim())) ||
       !this.customerForm.client_category_id.trim() ||
       (this.defaultPlanRequired && !this.customerForm.subscription_plan_id.trim()) ||
       !Number.isInteger(numberOfBags) ||
@@ -1149,8 +1080,6 @@ export class CustomersComponent implements OnInit {
       latitude: this.customerForm.latitude,
       longitude: this.customerForm.longitude,
       place_id: this.customerForm.place_id || null,
-      flat_no: this.customerForm.flat_no || null,
-      house_no: this.customerForm.house_no || null,
       number_of_bags: numberOfBags,
       notes: this.customerForm.notes.trim() || null,
       agreed_price: null,
@@ -1348,8 +1277,6 @@ export class CustomersComponent implements OnInit {
       latitude: customer.latitude,
       longitude: customer.longitude,
       place_id: customer.place_id || null,
-      flat_no: customer.flat_no || null,
-      house_no: customer.house_no || null,
       number_of_bags: customer.number_of_bags,
       notes: customer.notes.trim() || null,
       agreed_price: customer.agreed_price,
@@ -1429,8 +1356,6 @@ export class CustomersComponent implements OnInit {
       latitude: customer.latitude,
       longitude: customer.longitude,
       place_id: customer.place_id ?? '',
-      flat_no: customer.flat_no ?? '',
-      house_no: customer.house_no ?? '',
       number_of_bags: Number(customer.number_of_bags ?? 0),
       notes: customer.notes ?? '',
       customer_type: customer.customer_type ?? 'STANDARD',
@@ -1477,8 +1402,6 @@ export class CustomersComponent implements OnInit {
       latitude: null,
       longitude: null,
       place_id: '',
-      flat_no: '',
-      house_no: '',
       number_of_bags: 0,
       notes: '',
       property_id: '',

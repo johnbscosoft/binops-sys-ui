@@ -11,6 +11,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { LeafletModule } from '@bluehalo/ngx-leaflet';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { SimplebarAngularModule } from 'simplebar-angular';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 // Swiper Slider
 import { SlickCarouselModule } from 'ngx-slick-carousel';
@@ -42,6 +43,7 @@ import { CustomerReportsComponent } from './customer-reports/customer-reports.co
   imports: [
     CommonModule,
     FormsModule,
+    NgSelectModule,
     NgbToastModule,
     NgbProgressbarModule,
     NgbPaginationModule,
