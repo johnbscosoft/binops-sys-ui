@@ -82,6 +82,7 @@ jobs:
           tags: |
             type=raw,value=${{ steps.image_tag.outputs.value }}
             type=raw,value=ui-latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=ui-test-latest,enable=${{ github.ref == 'refs/heads/testenv' }}
 
       - name: Build and push image
         uses: docker/build-push-action@v7
@@ -90,6 +91,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
+          build-args: |
+            BUILD_VERSION=${{ steps.image_tag.outputs.value }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha

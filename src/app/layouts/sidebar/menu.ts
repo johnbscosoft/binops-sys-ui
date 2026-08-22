@@ -58,7 +58,7 @@ export const MENU: MenuItem[] = [
     ['Subscription Plans', 'plans'],
     // ['Renewal History', 'renewal-history']
   ]),
-  /* Modules below are hidden until their pages and routes are implemented.
+  /* Modules below are hidden until their pages and routes are implemented.*/
   menu(40, 'Waste Collection Operations', 'ri-recycle-line', '/collections', [
     ['Collection Schedule', 'schedule'],
     ['Collection Routes', 'routes'],
@@ -97,7 +97,7 @@ export const MENU: MenuItem[] = [
     ['Email Notifications', 'email'],
     ['Payment Alerts', 'payment-alerts'],
     ['Collection Alerts', 'collection-alerts']
-  ]), */
+  ]), 
   menu(100, 'Administration', 'ri-settings-3-line', '/administration', [
     ['Users', 'users'],
     // Not yet implemented:

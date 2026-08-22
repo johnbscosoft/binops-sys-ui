@@ -4,6 +4,7 @@
 
 export const environment = {
   production: false,
+  buildVersion: 'local-development',
   apiUrl: 'http://localhost:8001/api/v1',
   defaultauth: 'fakebackend',
   googleMapsApiKey: '',
