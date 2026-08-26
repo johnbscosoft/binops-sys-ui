@@ -23,6 +23,7 @@ import {
   CustomerService
 } from './customer.service';
 import {
+  PropertyPayload,
   PropertyRecord,
   PropertyService,
   PropertyUnit
@@ -138,6 +139,10 @@ export class CustomersComponent implements OnInit {
   isSavingCustomPlan = false;
   isCustomPlanPanelOpen = false;
   readonly customPlanOptionValue = '__add_custom_subscription__';
+  quickPropertyForm: PropertyPayload = this.emptyQuickPropertyForm('APARTMENT');
+  isSavingQuickProperty = false;
+  isQuickPropertyPanelOpen = false;
+  readonly quickPropertyOptionValue = '__add_new_property__';
   readonly customDurationOptions = [...SUBSCRIPTION_DURATION_OPTIONS];
   readonly customPickupFrequencyOptions = [...PICKUP_FREQUENCY_OPTIONS];
   clientCategories: ClientCategory[] = [];
@@ -211,6 +216,10 @@ export class CustomersComponent implements OnInit {
     return this.selectedProperty?.billing_mode === 'TENANT';
   }
 
+  get isCustomerFormPanelOpen(): boolean {
+    return this.isCustomPlanPanelOpen || this.isQuickPropertyPanelOpen;
+  }
+
   get defaultPlanRequired(): boolean {
     return !this.isPropertyCustomer || this.selectedProperty?.billing_mode === 'TENANT';
   }
@@ -271,12 +280,15 @@ export class CustomersComponent implements OnInit {
     this.customerForm.room_pricing_mode = null;
   }
 
-  loadProperties(): void {
+  loadProperties(selectPropertyId = ''): void {
     this.propertiesLoading = true;
     this.propertyService.list(true).subscribe({
       next: (response) => {
         this.properties = response.data;
         this.propertiesLoading = false;
+        if (selectPropertyId && this.properties.some((property) => property.id === selectPropertyId)) {
+          this.onPropertyChange(selectPropertyId);
+        }
       },
       error: () => {
         this.propertiesLoading = false;
@@ -304,6 +316,145 @@ export class CustomersComponent implements OnInit {
       this.locationError = '';
     }
     this.loadAvailableUnits(propertyId);
+  }
+
+  onPropertySelection(propertyId: string, content: TemplateRef<unknown>): void {
+    if (propertyId !== this.quickPropertyOptionValue) {
+      this.onPropertyChange(propertyId);
+      return;
+    }
+
+    const propertyType = this.selectedPropertyCategoryType;
+    if (!propertyType) return;
+    this.customerForm.property_id = '';
+    this.customerForm.property_unit_id = '';
+    this.availablePropertyUnits = [];
+    this.quickPropertyForm = this.emptyQuickPropertyForm(propertyType);
+    const offcanvasRef = this.offcanvasService.open(content, {
+      position: 'end',
+      backdrop: false,
+      panelClass: 'custom-subscription-offcanvas'
+    });
+    this.isQuickPropertyPanelOpen = true;
+    offcanvasRef.closed.subscribe(() => this.isQuickPropertyPanelOpen = false);
+    offcanvasRef.dismissed.subscribe(() => this.isQuickPropertyPanelOpen = false);
+  }
+
+  setQuickPropertyBillingMode(mode: 'OWNER' | 'TENANT'): void {
+    this.quickPropertyForm.billing_mode = mode;
+    if (mode === 'TENANT') {
+      this.quickPropertyForm.owner_customer_id = null;
+      this.quickPropertyForm.owner_name = null;
+      this.quickPropertyForm.owner_phone_number = null;
+      this.quickPropertyForm.owner_email = null;
+      this.quickPropertyForm.subscription_plan_id = null;
+    }
+  }
+
+  addQuickPropertyRoom(): void {
+    this.quickPropertyForm.units = [
+      ...this.quickPropertyForm.units,
+      {
+        id: null,
+        room_number: `Room ${this.quickPropertyForm.units.length + 1}`,
+        is_active: true,
+        occupancy_status: 'Vacant'
+      }
+    ];
+  }
+
+  removeQuickPropertyRoom(index: number): void {
+    this.quickPropertyForm.units = this.quickPropertyForm.units.filter((_, roomIndex) => roomIndex !== index);
+  }
+
+  saveQuickProperty(offcanvas: { close: (result?: unknown) => void }): void {
+    const name = this.quickPropertyForm.name.trim();
+    const location = this.quickPropertyForm.location.trim();
+    const units = this.quickPropertyForm.units.map((unit) => ({
+      ...unit,
+      room_number: unit.room_number.trim()
+    }));
+    const roomNumbers = units.map((unit) => unit.room_number.toLowerCase());
+    const ownerPhone = this.quickPropertyForm.owner_phone_number?.trim() ?? '';
+    const ownerEmail = this.quickPropertyForm.owner_email?.trim() ?? '';
+
+    if (!name || !location || !units.length || units.some((unit) => !unit.room_number)) {
+      void Swal.fire({
+        title: 'Check required fields',
+        text: 'Enter the property name, location, and at least one room number.',
+        icon: 'warning',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+    if (new Set(roomNumbers).size !== roomNumbers.length) {
+      void Swal.fire({
+        title: 'Duplicate room numbers',
+        text: 'Each room number must be unique within the property.',
+        icon: 'warning',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+    if (this.quickPropertyForm.billing_mode === 'OWNER' && (
+      !this.quickPropertyForm.owner_name?.trim() ||
+      !/^07\d{8}$/.test(ownerPhone) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail) ||
+      !this.quickPropertyForm.subscription_plan_id
+    )) {
+      void Swal.fire({
+        title: 'Owner billing details required',
+        text: 'Enter the owner name, valid phone number, email, and a subscription plan.',
+        icon: 'warning',
+        confirmButtonColor: '#405189'
+      });
+      return;
+    }
+
+    const payload: PropertyPayload = {
+      ...this.quickPropertyForm,
+      name,
+      location,
+      owner_name: this.quickPropertyForm.owner_name?.trim() || null,
+      owner_phone_number: ownerPhone || null,
+      owner_email: ownerEmail || null,
+      units
+    };
+    this.isSavingQuickProperty = true;
+    this.propertyService.create(payload).subscribe({
+      next: (response) => {
+        this.isSavingQuickProperty = false;
+        const property = response.data[0];
+        if (!property) {
+          offcanvas.close('Created');
+          this.loadProperties();
+          void Swal.fire({
+            title: 'Property created',
+            text: 'Refresh the apartment list and select the new property.',
+            icon: 'success',
+            confirmButtonColor: '#0ab39c'
+          });
+          return;
+        }
+        offcanvas.close('Created');
+        this.loadProperties(property.id);
+        void Swal.fire({
+          title: 'Property created',
+          text: `${property.name} was created, selected, and its rooms are ready to choose.`,
+          icon: 'success',
+          confirmButtonColor: '#0ab39c'
+        });
+      },
+      error: (error: Error) => {
+        this.isSavingQuickProperty = false;
+        void Swal.fire({
+          title: 'Property creation failed',
+          text: error.message || 'The property could not be created. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#f06548'
+        });
+      }
+    });
   }
 
   private loadAvailableUnits(propertyId: string, selectedUnitId = ''): void {
@@ -1414,6 +1565,22 @@ export class CustomersComponent implements OnInit {
       caretaker_name: '',
       caretaker_phone: '',
       status: 'Active'
+    };
+  }
+
+  private emptyQuickPropertyForm(propertyType: 'APARTMENT' | 'RENTAL'): PropertyPayload {
+    return {
+      name: '',
+      property_type: propertyType,
+      billing_mode: 'TENANT',
+      owner_customer_id: null,
+      owner_name: null,
+      owner_phone_number: null,
+      owner_email: null,
+      subscription_plan_id: null,
+      location: '',
+      status: 'Active',
+      units: [{ id: null, room_number: 'Room 1', is_active: true, occupancy_status: 'Vacant' }]
     };
   }
 

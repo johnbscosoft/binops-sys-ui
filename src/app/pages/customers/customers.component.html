@@ -375,17 +375,17 @@
       type="button"
       class="btn-close"
       aria-label="Close"
-      [disabled]="isCustomPlanPanelOpen"
+      [disabled]="isCustomerFormPanelOpen"
       (click)="modal.dismiss('Close')"></button>
   </div>
 
   <form #form="ngForm" (ngSubmit)="saveCustomer()">
     <fieldset
       class="border-0 p-0 m-0"
-      [class.opacity-75]="isCustomPlanPanelOpen"
-      [disabled]="isCustomPlanPanelOpen"
-      [attr.inert]="isCustomPlanPanelOpen ? '' : null"
-      [attr.aria-disabled]="isCustomPlanPanelOpen">
+      [class.opacity-75]="isCustomerFormPanelOpen"
+      [disabled]="isCustomerFormPanelOpen"
+      [attr.inert]="isCustomerFormPanelOpen ? '' : null"
+      [attr.aria-disabled]="isCustomerFormPanelOpen">
     <div class="modal-body customer-form-scroll">
       <div class="row g-3">
         <div class="col-12 col-md-6">
@@ -421,14 +421,15 @@
         @if (isPropertyCustomer) {
           <div class="col-12 col-md-6">
             <label for="customer-property" class="form-label">Apartment / Property <span class="text-danger">*</span></label>
-            <select id="customer-property" name="property_id" class="form-select"
-              [ngModel]="customerForm.property_id" (ngModelChange)="onPropertyChange($event)"
-              [disabled]="propertiesLoading" required>
-              <option value="" disabled>{{ propertiesLoading ? 'Loading properties...' : 'Select an apartment / property' }}</option>
+            <ng-select id="customer-property" name="property_id"
+              [ngModel]="customerForm.property_id" (ngModelChange)="onPropertySelection($event, quickPropertyOffcanvas)"
+              [disabled]="propertiesLoading" [loading]="propertiesLoading" [searchable]="true" [clearable]="false"
+              placeholder="Search or select an apartment / property" required>
               @for (property of matchingProperties; track property.id) {
-                <option [value]="property.id">{{ property.name }}</option>
+                <ng-option [value]="property.id">{{ property.name }}</ng-option>
               }
-            </select>
+              <ng-option [value]="quickPropertyOptionValue">＋ Add New Apartment / Property...</ng-option>
+            </ng-select>
             @if (!propertiesLoading && !matchingProperties.length) {
               <div class="form-text text-warning">No matching properties are configured. Add one from Customer Management → Properties.</div>
             } @else if (selectedProperty?.location) {
@@ -801,13 +802,121 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-light" (click)="modal.close('Close')">Cancel</button>
       <div class="d-flex gap-2 ms-auto">
-        <button type="submit" class="btn btn-success" [disabled]="isSaving || isCustomPlanPanelOpen">
+        <button type="submit" class="btn btn-success" [disabled]="isSaving || isCustomerFormPanelOpen">
           @if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
           {{ editingCustomer ? 'Update Customer' : 'Add Customer' }}
         </button>
       </div>
     </div>
     </fieldset>
+  </form>
+</ng-template>
+
+<ng-template #quickPropertyOffcanvas let-offcanvas>
+  <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
+    <div>
+      <h5 class="m-0 text-white">New {{ quickPropertyForm.property_type === 'APARTMENT' ? 'Apartment' : 'Rental' }}</h5>
+      <small class="text-white-50">Create it, then select a room for this client</small>
+    </div>
+    <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Close"
+      [disabled]="isSavingQuickProperty" (click)="offcanvas.dismiss('Close')"></button>
+  </div>
+
+  <form #quickPropertyFormRef="ngForm" class="d-flex flex-column flex-grow-1 overflow-hidden"
+    (ngSubmit)="saveQuickProperty(offcanvas)">
+    <div class="offcanvas-body overflow-auto">
+      <div class="mb-3">
+        <label for="quick-property-name" class="form-label">Property Name <span class="text-danger">*</span></label>
+        <input id="quick-property-name" name="quickPropertyName" type="text" class="form-control"
+          [(ngModel)]="quickPropertyForm.name" required minlength="2" maxlength="160"
+          placeholder="Enter apartment or property name">
+      </div>
+
+      <div class="mb-3">
+        <label for="quick-property-location" class="form-label">Location <span class="text-danger">*</span></label>
+        <input id="quick-property-location" name="quickPropertyLocation" type="text" class="form-control"
+          [(ngModel)]="quickPropertyForm.location" required minlength="2" maxlength="500"
+          placeholder="Location inherited by the client">
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label d-block">Who pays? <span class="text-danger">*</span></label>
+        <div class="btn-group w-100" role="group" aria-label="Property billing mode">
+          <button type="button" class="btn" [class.btn-primary]="quickPropertyForm.billing_mode === 'TENANT'"
+            [class.btn-soft-primary]="quickPropertyForm.billing_mode !== 'TENANT'"
+            (click)="setQuickPropertyBillingMode('TENANT')">Tenants pay</button>
+          <button type="button" class="btn" [class.btn-primary]="quickPropertyForm.billing_mode === 'OWNER'"
+            [class.btn-soft-primary]="quickPropertyForm.billing_mode !== 'OWNER'"
+            (click)="setQuickPropertyBillingMode('OWNER')">Owner pays</button>
+        </div>
+      </div>
+
+      @if (quickPropertyForm.billing_mode === 'OWNER') {
+        <div class="border rounded p-3 mb-4 bg-light-subtle">
+          <h6 class="mb-3">Property Owner Billing Details</h6>
+          <div class="mb-3">
+            <label for="quick-owner-name" class="form-label">Owner Name <span class="text-danger">*</span></label>
+            <input id="quick-owner-name" name="quickOwnerName" type="text" class="form-control"
+              [(ngModel)]="quickPropertyForm.owner_name" required minlength="2" maxlength="160">
+          </div>
+          <div class="mb-3">
+            <label for="quick-owner-phone" class="form-label">Owner Phone Number <span class="text-danger">*</span></label>
+            <input id="quick-owner-phone" name="quickOwnerPhone" type="tel" class="form-control"
+              [(ngModel)]="quickPropertyForm.owner_phone_number" required pattern="^07[0-9]{8}$"
+              maxlength="10" inputmode="numeric" placeholder="07XXXXXXXX">
+          </div>
+          <div class="mb-3">
+            <label for="quick-owner-email" class="form-label">Owner Email <span class="text-danger">*</span></label>
+            <input id="quick-owner-email" name="quickOwnerEmail" type="email" class="form-control"
+              [(ngModel)]="quickPropertyForm.owner_email" required email maxlength="255">
+          </div>
+          <div>
+            <label for="quick-property-plan" class="form-label">Subscription Plan <span class="text-danger">*</span></label>
+            <ng-select id="quick-property-plan" name="quickPropertyPlan" [(ngModel)]="quickPropertyForm.subscription_plan_id"
+              [searchable]="true" [clearable]="false" placeholder="Search or select a subscription plan" required>
+              @for (plan of subscriptionPlans; track plan.id) {
+                <ng-option [value]="plan.id">{{ subscriptionPlanLabel(plan) }}</ng-option>
+              }
+            </ng-select>
+          </div>
+        </div>
+      }
+
+      <div>
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+          <label class="form-label mb-0">Rooms <span class="text-danger">*</span></label>
+          <button type="button" class="btn btn-sm btn-soft-primary" (click)="addQuickPropertyRoom()">
+            <i class="ri-add-line me-1"></i>Add Room
+          </button>
+        </div>
+        <p class="text-muted fs-12 mb-2">Add the rooms that will be available for client assignment.</p>
+        <div class="d-flex flex-column gap-2">
+          @for (room of quickPropertyForm.units; track room.id || $index) {
+            <div class="input-group">
+              <span class="input-group-text">{{ $index + 1 }}</span>
+              <input [id]="'quick-property-room-' + $index" [name]="'quickPropertyRoom' + $index"
+                type="text" class="form-control" [(ngModel)]="room.room_number" required maxlength="80"
+                placeholder="Room number">
+              <button type="button" class="btn btn-soft-danger" [disabled]="quickPropertyForm.units.length === 1"
+                (click)="removeQuickPropertyRoom($index)" aria-label="Remove room">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="border-top p-3 mt-auto bg-body">
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-light w-50" [disabled]="isSavingQuickProperty"
+          (click)="offcanvas.dismiss('Cancel')">Cancel</button>
+        <button type="submit" class="btn btn-success w-50" [disabled]="isSavingQuickProperty">
+          @if (isSavingQuickProperty) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          Create &amp; Select
+        </button>
+      </div>
+    </div>
   </form>
 </ng-template>
 
