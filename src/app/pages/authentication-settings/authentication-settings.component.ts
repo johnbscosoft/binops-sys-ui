@@ -22,7 +22,9 @@ export class AuthenticationSettingsComponent implements OnInit {
   form: AuthenticationSettingsPayload = {
     otp_enabled: true,
     email_otp_enabled: true,
-    sms_otp_enabled: true
+    sms_otp_enabled: true,
+    google_location_enabled: false,
+    location_provider: 'MANUAL'
   };
   isLoading = true;
   isSaving = false;
@@ -43,7 +45,9 @@ export class AuthenticationSettingsComponent implements OnInit {
         this.form = {
           otp_enabled: settings.otp_enabled,
           email_otp_enabled: settings.email_otp_enabled,
-          sms_otp_enabled: settings.sms_otp_enabled
+          sms_otp_enabled: settings.sms_otp_enabled,
+          google_location_enabled: settings.google_location_enabled,
+          location_provider: settings.location_provider ?? 'MANUAL'
         };
         this.originallyEnabled = settings.otp_enabled;
         this.isLoading = false;

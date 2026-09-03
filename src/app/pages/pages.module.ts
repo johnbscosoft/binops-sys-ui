@@ -2,7 +2,7 @@ import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  NgbToastModule, NgbProgressbarModule, NgbPaginationModule
+  NgbToastModule, NgbProgressbarModule, NgbPaginationModule, NgbModalModule, NgbNavModule
 } from '@ng-bootstrap/ng-bootstrap';
 
 import { FlatpickrDirective } from 'angularx-flatpickr';
@@ -36,10 +36,14 @@ import { AuthenticationSettingsComponent } from './authentication-settings/authe
 import { ClientCategoriesComponent } from './client-categories/client-categories.component';
 import { PropertiesComponent } from './properties/properties.component';
 import { CustomerReportsComponent } from './customer-reports/customer-reports.component';
+import { CollectionSetupComponent } from './collection-setup/collection-setup.component';
+// import { BlankPageComponent } from './blank-page/blank-page.component'; // Used by future placeholder-only routes.
+import { StaffComponent } from './staff/staff.component';
+import { VehiclesComponent } from './vehicles/vehicles.component';
 
 
 @NgModule({
-  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent],
+  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent, CollectionSetupComponent, StaffComponent, VehiclesComponent],
   imports: [
     CommonModule,
     FormsModule,
@@ -47,6 +51,8 @@ import { CustomerReportsComponent } from './customer-reports/customer-reports.co
     NgbToastModule,
     NgbProgressbarModule,
     NgbPaginationModule,
+    NgbModalModule,
+    NgbNavModule,
     FlatpickrDirective,
     CountUpDirective,
     NgApexchartsModule,

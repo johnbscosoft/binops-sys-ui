@@ -16,6 +16,7 @@ import {
   ClientCategory,
   ClientCategoryService
 } from '../client-categories/client-category.service';
+import { AuthenticationSettingsService } from '../authentication-settings/authentication-settings.service';
 import {
   ApiCustomer,
   ApiCustomerRoom,
@@ -31,6 +32,7 @@ import {
 
 type ServiceArrangement = 'LANDLORD' | 'DIRECT_TENANT';
 type RoomPricingMode = 'SHARED' | 'PER_ROOM';
+type CustomerSortColumn = keyof Client | 'category';
 
 interface CustomerRoomForm {
   id: string | null;
@@ -120,6 +122,8 @@ export class CustomersComponent implements OnInit {
   searchTerm = '';
   page = 1;
   pageSize = 10;
+  sortColumn: CustomerSortColumn = 'customer_id';
+  sortDirection: 'asc' | 'desc' = 'asc';
   isLoading = true;
   isSaving = false;
   editingCustomer: Client | null = null;
@@ -152,22 +156,44 @@ export class CustomersComponent implements OnInit {
   propertiesLoading = false;
   propertyUnitsLoading = false;
   readonly googleMapsApiKeyConfigured = Boolean(environment.googleMapsApiKey.trim());
-  useGoogleLocations = this.googleMapsApiKeyConfigured;
+  locationProvider: 'MANUAL' | 'GOOGLE' = 'MANUAL';
+  useGoogleLocations = false;
+  isGettingCurrentLocation = false;
 
   constructor(  
     private readonly modalService: NgbModal,
     private readonly offcanvasService: NgbOffcanvas,
     private readonly subscriptionPlanService: SubscriptionPlanService,
     private readonly clientCategoryService: ClientCategoryService,
+    private readonly authenticationSettingsService: AuthenticationSettingsService,
     private readonly propertyService: PropertyService,
     private readonly customerService: CustomerService
   ) {}
 
   ngOnInit(): void {
+    console.info('Google Maps API key:', environment.googleMapsApiKey);
     this.loadCustomers();
     this.loadSubscriptionPlans();
     this.loadClientCategories();
     this.loadProperties();
+    this.loadGoogleLocationPreference();
+  }
+
+  private loadGoogleLocationPreference(): void {
+    this.authenticationSettingsService.getLocationPreference().subscribe({
+      next: (response) => {
+        this.locationProvider = response.data[0]?.location_provider ?? 'MANUAL';
+        this.applyGoogleLocationMode();
+      },
+      error: () => {
+        this.locationProvider = 'MANUAL';
+        this.applyGoogleLocationMode();
+      }
+    });
+  }
+
+  private applyGoogleLocationMode(): void {
+    this.useGoogleLocations = this.locationProvider === 'GOOGLE' && this.googleMapsApiKeyConfigured;
   }
 
   loadClientCategories(): void {
@@ -720,11 +746,7 @@ export class CustomersComponent implements OnInit {
   get filteredCustomers(): Client[] {
     const term = this.searchTerm.trim().toLowerCase();
 
-    if (!term) {
-      return this.customers;
-    }
-
-    return this.customers.filter((customer) =>
+    const filtered = !term ? this.customers : this.customers.filter((customer) =>
       [
         customer.customer_id,
         customer.name,
@@ -738,6 +760,7 @@ export class CustomersComponent implements OnInit {
       ]
         .some((value) => value.toLowerCase().includes(term))
     );
+    return [...filtered].sort((left, right) => this.compareCustomerValues(this.sortValue(left), this.sortValue(right)));
   }
 
   get paginatedCustomers(): Client[] {
@@ -755,6 +778,29 @@ export class CustomersComponent implements OnInit {
 
   searchCustomers(): void {
     this.page = 1;
+  }
+
+  sortBy(column: CustomerSortColumn): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.page = 1;
+  }
+
+  sortIcon(column: CustomerSortColumn): string {
+    return this.sortColumn !== column ? 'ri-expand-up-down-line' : this.sortDirection === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line';
+  }
+
+  private sortValue(customer: Client): unknown {
+    return this.sortColumn === 'category' ? this.clientCategoryName(customer.client_category_id) : customer[this.sortColumn];
+  }
+
+  private compareCustomerValues(left: unknown, right: unknown): number {
+    const comparison = String(left ?? '').localeCompare(String(right ?? ''), undefined, { numeric: true, sensitivity: 'base' });
+    return this.sortDirection === 'asc' ? comparison : -comparison;
   }
 
   loadCustomers(): void {
@@ -785,7 +831,7 @@ export class CustomersComponent implements OnInit {
     this.attachmentError = '';
     this.isAttachmentDragActive = false;
     this.locationError = '';
-    this.useGoogleLocations = this.googleMapsApiKeyConfigured;
+    this.applyGoogleLocationMode();
     this.openCustomerModal(content);
   }
 
@@ -981,7 +1027,7 @@ export class CustomersComponent implements OnInit {
       this.loadAvailableUnits(customer.property_id, customer.property_unit_id);
     }
     this.locationError = '';
-    this.useGoogleLocations = this.googleMapsApiKeyConfigured;
+    this.applyGoogleLocationMode();
     this.openCustomerModal(content);
   }
 
@@ -1039,7 +1085,51 @@ export class CustomersComponent implements OnInit {
     }
   }
 
+  onManualLocationChanged(): void {
+    this.customerForm.latitude = null;
+    this.customerForm.longitude = null;
+    this.customerForm.place_id = '';
+  }
+
+  async useCurrentLocation(): Promise<void> {
+    if (!navigator.geolocation) {
+      this.locationError = 'This browser does not support current-location access.';
+      return;
+    }
+    this.isGettingCurrentLocation = true;
+    this.locationError = '';
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000
+        })
+      );
+      await this.loadGoogleMapsScript();
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const result = await new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } });
+      const place = result.results[0];
+      if (!place?.formatted_address) {
+        throw new Error('No address found for your current position.');
+      }
+      this.customerForm.location = place.formatted_address;
+      this.customerForm.latitude = latitude;
+      this.customerForm.longitude = longitude;
+      this.customerForm.place_id = place.place_id ?? '';
+    } catch {
+      this.locationError = 'Location permission was denied or an address could not be found for your current position.';
+    } finally {
+      this.isGettingCurrentLocation = false;
+    }
+  }
+
+
   private loadGoogleMapsScript(): Promise<void> {
+    console.info('Environment key:', environment.googleMapsApiKey);
+    console.info('Google Maps already loaded:', typeof google !== 'undefined' && Boolean(google.maps));
+
     if (typeof google !== 'undefined' && Boolean(google.maps)) {
       return Promise.resolve();
     }
@@ -1060,6 +1150,7 @@ export class CustomersComponent implements OnInit {
       script.onload = () => resolve();
       script.onerror = () => reject(new Error('Google Maps failed to load.'));
       document.head.appendChild(script);
+
     });
   }
 

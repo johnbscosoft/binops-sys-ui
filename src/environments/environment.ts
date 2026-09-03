@@ -7,7 +7,7 @@ export const environment = {
   buildVersion: 'local-development',
   apiUrl: 'http://localhost:8001/api/v1',
   defaultauth: 'fakebackend',
-  googleMapsApiKey: '',
+  googleMapsApiKey: 'AIzaSyDORDOX4kiyl5OXN4lUD0gNJZG9zwWVT2I',
   firebaseConfig: {
     apiKey: '',
     authDomain: '',

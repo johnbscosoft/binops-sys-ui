@@ -138,6 +138,30 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start justify-content-between gap-4">
+            <div class="d-flex gap-3">
+              <div class="setting-icon bg-success-subtle text-success">
+                <i class="ri-map-pin-line"></i>
+              </div>
+              <div>
+                <h5 class="mb-1">Customer location provider</h5>
+                <p class="text-muted mb-0">Choose how customer locations are captured.</p>
+              </div>
+            </div>
+            <select class="form-select w-auto" name="locationProvider" [(ngModel)]="form.location_provider">
+              <option value="MANUAL">Manual entry</option><option value="GOOGLE">Google Maps</option>
+            </select>
+          </div>
+          <div class="alert mt-4 mb-0" [ngClass]="form.location_provider === 'MANUAL' ? 'alert-secondary' : 'alert-success'">
+            <i class="ri-map-pin-2-line me-2"></i>
+            @if (form.location_provider === 'GOOGLE') { Google Places search and current GPS save address, coordinates, and Place ID. }
+            @else { Users type a location manually. Coordinates are not required. }
+          </div>
+        </div>
+      </div>
+
       <div class="alert alert-info">
         <div class="d-flex gap-2">
           <i class="ri-information-line fs-18"></i>

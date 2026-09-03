@@ -47,14 +47,14 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light text-muted">
                 <tr>
-                  <th>Client ID</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Bags</th>
-                  <th>Phone</th>
-                  <th>Location</th>
-                  <th>Date Added</th>
-                  <th>Status</th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('customer_id')">Client ID <i [class]="sortIcon('customer_id')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('name')">Name <i [class]="sortIcon('name')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('category')">Category <i [class]="sortIcon('category')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('number_of_bags')">Bags <i [class]="sortIcon('number_of_bags')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('phone_no')">Phone <i [class]="sortIcon('phone_no')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('location')">Location <i [class]="sortIcon('location')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('date_added')">Date Added <i [class]="sortIcon('date_added')"></i></button></th>
+                  <th><button type="button" class="btn btn-link btn-sm text-muted p-0" (click)="sortBy('status')">Status <i [class]="sortIcon('status')"></i></button></th>
                   <th class="text-end">Actions</th>
                 </tr>
               </thead>
@@ -499,9 +499,14 @@
           @if (useGoogleLocations) {
             <div id="customer-location" #locationAutocompleteContainer class="google-location-autocomplete"></div>
             <input name="location" type="hidden" [(ngModel)]="customerForm.location" [required]="!isPropertyCustomer">
+            <button type="button" class="btn btn-soft-primary btn-sm mt-2" (click)="useCurrentLocation()" [disabled]="isGettingCurrentLocation">
+              @if (isGettingCurrentLocation) { <span class="spinner-border spinner-border-sm me-1"></span>Finding location... }
+              @else { <i class="ri-focus-3-line me-1"></i>Use current location }
+            </button>
             @if (customerForm.location) {
               <div class="form-text text-success">
                 <i class="ri-map-pin-line me-1"></i>{{ customerForm.location }}
+                @if (customerForm.latitude !== null && customerForm.longitude !== null) { <span>({{ customerForm.latitude }}, {{ customerForm.longitude }})</span> }
               </div>
             } @else {
               <div class="form-text">Type a location, then select it from the suggestions.</div>
@@ -509,14 +514,13 @@
           } @else {
             <input id="customer-location" name="location" type="text" class="form-control"
               [(ngModel)]="customerForm.location" #locationControl="ngModel" [required]="!isPropertyCustomer"
+              (ngModelChange)="onManualLocationChanged()"
               [class.is-invalid]="locationControl.invalid && locationControl.touched">
             @if (locationControl.invalid && locationControl.touched) {
               <div class="invalid-feedback">Location is required.</div>
             }
-            @if (!googleMapsApiKeyConfigured) {
-              <!-- <div class="form-text text-warning">
-                Configure googleMapsApiKey to enable Google location suggestions and coordinates.
-              </div> -->
+            @if (locationProvider === 'GOOGLE' && !googleMapsApiKeyConfigured) {
+              <div class="form-text text-warning">Google location capture is enabled, but no Google Maps API key is configured for this UI.</div>
             }
           }
           @if (locationError) {

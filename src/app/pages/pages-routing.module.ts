@@ -9,6 +9,10 @@ import { AuthenticationSettingsComponent } from './authentication-settings/authe
 import { ClientCategoriesComponent } from './client-categories/client-categories.component';
 import { PropertiesComponent } from './properties/properties.component';
 import { CustomerReportsComponent } from './customer-reports/customer-reports.component';
+import { CollectionSetupComponent } from './collection-setup/collection-setup.component';
+// import { BlankPageComponent } from './blank-page/blank-page.component'; // Restore with placeholder routes when their modules are implemented.
+import { StaffComponent } from './staff/staff.component';
+import { VehiclesComponent } from './vehicles/vehicles.component';
 
 const routes: Routes = [
     {
@@ -41,6 +45,20 @@ const routes: Routes = [
       path: 'subscriptions/plans',
       component: SubscriptionsComponent
     },
+    {
+      path: 'collections/setup',
+      component: CollectionSetupComponent
+    },
+    // Waste Collection placeholders retained in source but not exposed until implemented.
+    // { path: 'collections/dashboard', component: BlankPageComponent },
+    // { path: 'collections/daily-jobs', component: BlankPageComponent },
+    // { path: 'collections/schedules', component: BlankPageComponent },
+    { path: 'collections/fleet-crew', component: VehiclesComponent },
+    // { path: 'collections/missed-collections', component: BlankPageComponent },
+    // { path: 'collections/reports', component: BlankPageComponent },
+    { path: 'vehicles/list', component: VehiclesComponent },
+    { path: 'staff/management', component: StaffComponent },
+    { path: 'staff/drivers', component: StaffComponent },
     {
       path: 'administration/company-settings',
       component: CompanySettingsComponent

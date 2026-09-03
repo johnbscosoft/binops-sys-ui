@@ -1,0 +1,120 @@
+<app-breadcrumbs title="Areas & Routes" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="card">
+  <div class="card-header border-bottom-dashed">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <h5 class="card-title mb-1">Waste Collection Setup</h5>
+        <p class="text-muted mb-0">Create collection areas, then organise their service routes.</p>
+      </div>
+      <button type="button" class="btn btn-success" (click)="activeTab === 'areas' ? openAreaModal(areaModal) : openRouteModal(routeModal)">
+        <i class="ri-add-line align-bottom me-1"></i>Add {{ activeTab === 'areas' ? 'Area' : 'Route' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <ul ngbNav #setupNav="ngbNav" [(activeId)]="activeTab" class="nav nav-pills nav-success mb-3">
+      <li [ngbNavItem]="'areas'">
+        <button ngbNavLink type="button"><i class="ri-map-pin-line me-1"></i>Areas <span class="badge bg-light text-dark ms-1">{{ areas.length }}</span></button>
+        <ng-template ngbNavContent>
+          <div class="table-responsive table-card">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-muted"><tr><th>Area Code</th><th>Area Name</th><th>Service Model</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+              <tbody>
+                @for (area of areas; track area.id) {
+                  <tr>
+                    <td><span class="badge bg-primary-subtle text-primary area-code">{{ area.area_code }}</span></td>
+                    <td class="fw-medium">{{ area.name }}</td>
+                    <td><span class="badge" [ngClass]="area.service_model === 'SUBCONTRACT' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'">{{ area.service_model === 'SUBCONTRACT' ? 'Subcontract' : 'Direct' }}</span></td>
+                    <td><span class="badge" [ngClass]="area.status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">{{ area.status }}</span></td>
+                    <td>{{ area.created_at | date:'mediumDate' }}</td>
+                    <td class="text-end">
+                      <div ngbDropdown container="body" class="d-inline-block">
+                        <button type="button" class="btn btn-sm btn-soft-secondary" ngbDropdownToggle>Actions</button>
+                        <div ngbDropdownMenu class="dropdown-menu-end">
+                          <button ngbDropdownItem type="button" (click)="openAreaModal(areaModal, area)"><i class="ri-pencil-line me-2"></i>Edit</button>
+                          <button ngbDropdownItem type="button" class="text-danger" (click)="deleteArea(area)"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty { <tr><td colspan="6" class="text-center text-muted py-4">No collection areas have been created.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </ng-template>
+      </li>
+      <li [ngbNavItem]="'routes'">
+        <button ngbNavLink type="button"><i class="ri-route-line me-1"></i>Routes <span class="badge bg-light text-dark ms-1">{{ routes.length }}</span></button>
+        <ng-template ngbNavContent>
+          <div class="table-responsive table-card">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-muted"><tr><th>Area</th><th>Area Code</th><th>Route Name</th><th>Vehicle</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+              <tbody>
+                @for (route of routes; track route.id) {
+                  <tr>
+                    <td class="fw-medium">{{ route.area_name || '—' }}</td>
+                    <td><span class="badge bg-primary-subtle text-primary area-code">{{ route.area_code }}</span></td>
+                    <td>{{ route.name }}</td>
+                    <td class="text-muted">{{ route.vehicle_plate || 'Not assigned' }}</td>
+                    <td><span class="badge" [ngClass]="route.status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">{{ route.status }}</span></td>
+                    <td class="text-end">
+                      <div ngbDropdown container="body" class="d-inline-block">
+                        <button type="button" class="btn btn-sm btn-soft-secondary" ngbDropdownToggle>Actions</button>
+                        <div ngbDropdownMenu class="dropdown-menu-end">
+                          <button ngbDropdownItem type="button" (click)="openRouteModal(routeModal, route)"><i class="ri-pencil-line me-2"></i>Edit</button>
+                          <button ngbDropdownItem type="button" class="text-danger" (click)="deleteRoute(route)"><i class="ri-delete-bin-line me-2"></i>Delete</button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty { <tr><td colspan="6" class="text-center text-muted py-4">No collection routes have been created.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </ng-template>
+      </li>
+    </ul>
+    <div [ngbNavOutlet]="setupNav"></div>
+    @if (isLoading) { <div class="position-relative"><div class="spinner-border text-primary" role="status"></div></div> }
+  </div>
+</div>
+
+<ng-template #areaModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div><h5 class="modal-title mb-1">{{ editingArea ? 'Edit Collection Area' : 'Add Collection Area' }}</h5><span class="text-muted fs-12">Area codes are unique within your company.</span></div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+  <form #areaNgForm="ngForm" (ngSubmit)="saveArea()">
+    <div class="modal-body">
+      <div class="row g-3">
+        @if (editingArea) { <div class="col-md-5"><label class="form-label" for="area-code">Area Code</label><input id="area-code" name="areaCode" class="form-control text-uppercase" [(ngModel)]="areaForm.area_code" readonly></div> }
+        <div [class]="editingArea ? 'col-md-7' : 'col-12'"><label class="form-label" for="area-name">Area Name <span class="text-danger">*</span></label><input id="area-name" name="areaName" class="form-control" [(ngModel)]="areaForm.name" required minlength="2" maxlength="160"></div>
+        <div class="col-12"><label class="form-label">Google location</label>@if (googleMapsApiKeyConfigured) { <div #areaLocationAutocomplete class="google-location-autocomplete"></div> } @else { <input class="form-control" name="areaLocation" [(ngModel)]="areaForm.location" placeholder="Configure a Google Maps API key to search locations"> } @if (areaForm.location) { <div class="form-text text-success"><i class="ri-map-pin-line me-1"></i>{{ areaForm.location }} @if (areaForm.latitude !== null && areaForm.longitude !== null) { ({{ areaForm.latitude }}, {{ areaForm.longitude }}) }</div> }</div>
+        <div class="col-md-6"><label class="form-label">Service model <span class="text-danger">*</span></label><select class="form-select" name="serviceModel" [(ngModel)]="areaForm.service_model"><option value="DIRECT">Direct</option><option value="SUBCONTRACT">Subcontract</option></select></div>
+        @if (areaForm.service_model === 'SUBCONTRACT') { <div class="col-md-6"><label class="form-label">Contracting organisation <span class="text-danger">*</span></label><ng-select name="contractingOrganisation" [(ngModel)]="areaForm.contracting_organisation_id" (ngModelChange)="onOrganisationSelection($event, organisationPanel)" [searchable]="true" [clearable]="true" placeholder="Search or add an organisation"><ng-option [value]="addOrganisationOption"><i class="ri-add-line me-1"></i>Add new contracting organisation</ng-option>@for (organisation of organisations; track organisation.id) { <ng-option [value]="organisation.id">{{ organisation.name }}</ng-option> }</ng-select></div> }
+        <div class="col-12"><label class="form-label" for="area-status">Status <span class="text-danger">*</span></label><select id="area-status" name="areaStatus" class="form-select" [(ngModel)]="areaForm.status" required><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" (click)="modal.dismiss('Cancel')">Cancel</button><button type="submit" class="btn btn-success" [disabled]="areaNgForm.invalid || isSaving">@if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }{{ editingArea ? 'Update Area' : 'Add Area' }}</button></div>
+  </form>
+</ng-template>
+
+<ng-template #organisationPanel let-offcanvas><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title">Add Contracting Organisation</h5><button type="button" class="btn-close" (click)="offcanvas.dismiss()"></button></div><div class="offcanvas-body"><div class="mb-3"><label class="form-label">Organisation name <span class="text-danger">*</span></label><input class="form-control" [(ngModel)]="organisationForm.name" name="orgName"></div><div class="mb-3"><label class="form-label">Commission type</label><select class="form-select" [(ngModel)]="organisationForm.commission_type" name="commissionType"><option value="PERCENTAGE_OF_LUMP_SUM">Percentage of the Lumpsum</option><option value="PERCENTAGE_PER_COLLECTION">Percentage Per Collection</option><option value="FIXED_AMOUNT_OF_LUMP_SUM">Fixed amount of Lumpsum</option><option value="FIXED_AMOUNT_PER_COLLECTION">Fixed Amount per Collection</option></select></div><div class="mb-3"><label class="form-label">Commission rate</label><input type="number" class="form-control" [(ngModel)]="organisationForm.commission_rate" name="commissionRate" [placeholder]="organisationForm.commission_type.startsWith('PERCENTAGE') ? 'Rate %' : 'Amount'"></div><div class="mb-3"><label class="form-label">Contract start date</label><input type="date" class="form-control" [(ngModel)]="organisationForm.contract_start_date" name="contractStart"></div><div class="mb-3"><label class="form-label">Contract end date</label><input type="date" class="form-control" [(ngModel)]="organisationForm.contract_end_date" name="contractEnd"></div><button class="btn btn-success w-100" (click)="saveOrganisation(); offcanvas.close()">Save organisation</button></div></ng-template>
+
+<ng-template #routeModal let-modal>
+  <div class="modal-header bg-light p-3">
+    <div><h5 class="modal-title mb-1">{{ editingRoute ? 'Edit Collection Route' : 'Add Collection Route' }}</h5><span class="text-muted fs-12">Every route is assigned to an existing collection area.</span></div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Close')"></button>
+  </div>
+  <form #routeNgForm="ngForm" (ngSubmit)="saveRoute()">
+    <div class="modal-body"><div class="row g-3">
+      <div class="col-12"><label class="form-label" for="route-area">Collection Area <span class="text-danger">*</span></label><select id="route-area" name="routeArea" class="form-select" [(ngModel)]="routeForm.area_id" (ngModelChange)="onAreaSelected()" required><option value="" disabled>Select an area</option>@for (area of areas; track area.id) { <option [value]="area.id">{{ area.area_code }} — {{ area.name }}</option> }</select></div>
+      <div class="col-12"><label class="form-label" for="route-name">Route Name <span class="text-danger">*</span></label><input id="route-name" name="routeName" class="form-control" [(ngModel)]="routeForm.name" required minlength="2" maxlength="160"></div>
+      <div class="col-12"><label class="form-label" for="route-vehicle">Assign vehicle</label><ng-select id="route-vehicle" name="routeVehicle" [items]="vehicles" bindLabel="plate_number" bindValue="id" [(ngModel)]="routeForm.vehicle_id" [clearable]="true" [searchable]="true" placeholder="Select a vehicle"><ng-template ng-option-tmp let-item="item">{{ item.plate_number }} <span class="text-muted">· {{ item.model }}</span></ng-template></ng-select></div>
+      <div class="col-12"><label class="form-label" for="route-status">Status <span class="text-danger">*</span></label><select id="route-status" name="routeStatus" class="form-select" [(ngModel)]="routeForm.status" required><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+    </div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" (click)="modal.dismiss('Cancel')">Cancel</button><button type="submit" class="btn btn-success" [disabled]="routeNgForm.invalid || isSaving">@if (isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }{{ editingRoute ? 'Update Route' : 'Add Route' }}</button></div>
+  </form>
+</ng-template>

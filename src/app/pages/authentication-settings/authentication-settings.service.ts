@@ -10,6 +10,8 @@ export interface AuthenticationSettings {
   otp_enabled: boolean;
   email_otp_enabled: boolean;
   sms_otp_enabled: boolean;
+  google_location_enabled: boolean;
+  location_provider: 'MANUAL' | 'GOOGLE';
   email_delivery_configured: boolean;
   sms_delivery_configured: boolean;
   development_mode: boolean;
@@ -19,6 +21,8 @@ export interface AuthenticationSettings {
 export type AuthenticationSettingsPayload = Pick<
   AuthenticationSettings,
   'otp_enabled' | 'email_otp_enabled' | 'sms_otp_enabled'
+  | 'google_location_enabled'
+  | 'location_provider'
 >;
 
 interface ApiResponse<T> {
@@ -42,5 +46,11 @@ export class AuthenticationSettingsService {
     payload: AuthenticationSettingsPayload
   ): Observable<ApiResponse<AuthenticationSettings>> {
     return this.http.patch<ApiResponse<AuthenticationSettings>>(this.endpoint, payload);
+  }
+
+  getLocationPreference(): Observable<ApiResponse<Pick<AuthenticationSettings, 'location_provider'>>> {
+    return this.http.get<ApiResponse<Pick<AuthenticationSettings, 'location_provider'>>>(
+      `${this.endpoint}/location`
+    );
   }
 }

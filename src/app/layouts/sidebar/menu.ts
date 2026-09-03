@@ -58,13 +58,15 @@ export const MENU: MenuItem[] = [
     ['Subscription Plans', 'plans'],
     // ['Renewal History', 'renewal-history']
   ]),
-  /* Modules below are hidden until their pages and routes are implemented.*/
   menu(40, 'Waste Collection Operations', 'ri-recycle-line', '/collections', [
-    ['Collection Schedule', 'schedule'],
-    ['Collection Routes', 'routes'],
-    ['Collection Assignments', 'assignments'],
-    ['Adhoc Pickup Requests', 'adhoc-pickups'],
-    ['Collection History', 'history']
+    ['Areas & Routes', 'setup'],
+    ['Vehicles & Drivers', 'fleet-crew'],
+    // Not yet implemented:
+    // ['Dashboard', 'dashboard'],
+    // ['Daily Jobs', 'daily-jobs'],
+    // ['Schedules', 'schedules'],
+    // ['Missed Collections', 'missed-collections'],
+    // ['Reports', 'reports'],
   ]),
   menu(50, 'Finance', 'ri-money-dollar-circle-line', '/finance', [
     ['Payments', 'payments'],
@@ -75,15 +77,16 @@ export const MENU: MenuItem[] = [
   ]),
   menu(60, 'Fleet Management', 'ri-truck-line', '/vehicles', [
     ['Vehicles', 'list'],
-    ['Vehicle Maintenance', 'maintenance'],
-    ['Fuel Tracking', 'fuel-tracking'],
-    ['Driver Assignments', 'driver-assignments']
+    // Not yet implemented:
+    // ['Vehicle Maintenance', 'maintenance'],
+    // ['Fuel Tracking', 'fuel-tracking'],
+    // ['Driver Assignments', 'driver-assignments']
   ]),
   menu(70, 'Human Resource', 'ri-team-line', '/staff', [
     ['Staff Management', 'management'],
     ['Drivers', 'drivers'],
-    ['Attendance', 'attendance'],
-    ['Leave Management', 'leave-management']
+    // ['Attendance', 'attendance'],
+    // ['Leave Management', 'leave-management']
   ]),
   menu(80, 'Reports', 'ri-file-chart-line', '/reports', [
     ['Revenue Reports', 'revenue'],
