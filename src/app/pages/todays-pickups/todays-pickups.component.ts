@@ -1,0 +1,2 @@
+import {Component} from '@angular/core';import {HttpClient} from '@angular/common/http';import {environment} from '../../../environments/environment';
+@Component({selector:'app-todays-pickups',templateUrl:'./todays-pickups.component.html',standalone:false})export class TodaysPickupsComponent{date=new Date().toISOString().slice(0,10);pickups:any[]=[];constructor(private http:HttpClient){}ngOnInit(){this.load()}load(){this.http.get<any>(`${environment.apiUrl}/daily-jobs/pickups/today`,{params:{job_date:this.date}}).subscribe(r=>this.pickups=r.data)}}

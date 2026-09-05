@@ -107,6 +107,9 @@
                           <button type="button" ngbDropdownItem (click)="openEditCustomer(customerModal, customer)">
                             <i class="ri-pencil-line text-primary me-2"></i>Edit Customer
                           </button>
+                          <button type="button" ngbDropdownItem (click)="openAddRoute(customerRouteModal, customer)">
+                            <i class="ri-route-line text-success me-2"></i>Add Route
+                          </button>
                           <button
                             type="button"
                             ngbDropdownItem
@@ -324,6 +327,7 @@
     </div>
   }
 </ng-template>
+<ng-template #customerRouteModal let-modal><div class="modal-header bg-light p-3"><div><h5 class="modal-title mb-1">Add Route</h5><span class="text-muted">Assign customer to a collection route.</span></div><button type="button" class="btn-close" (click)="modal.dismiss()"></button></div>@if(routeCustomer;as customer){<div class="modal-body"><div class="row g-3"><div class="col-md-6"><label class="form-label text-muted">Customer</label><div class="fw-semibold">{{customer.name}}</div></div><div class="col-md-6"><label class="form-label text-muted">Location</label><div>{{customer.location || 'Not recorded'}}</div></div><div class="col-12"><label class="form-label">Collection route <span class="text-danger">*</span></label><ng-select [items]="collectionRoutes" bindLabel="name" bindValue="id" [(ngModel)]="selectedRouteId" placeholder="Select route"><ng-template ng-option-tmp let-item="item">{{item.route_code || item.name}} — {{item.area_name}}</ng-template></ng-select></div></div></div><div class="modal-footer"><button class="btn btn-light" (click)="modal.dismiss()">Cancel</button><button class="btn btn-success" [disabled]="!selectedRouteId" (click)="saveCustomerRoute(modal)">Save Route</button></div>}</ng-template>
 
 <ng-template #customerQrCodeModal let-modal>
   <div class="modal-header bg-light p-3">

@@ -1,5 +1,7 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import Swal from 'sweetalert2';
 import { Staff, StaffPayload, StaffService } from './staff.service';
 
@@ -11,14 +13,17 @@ export class StaffComponent {
   editing: Staff | null = null;
   selectedAttachmentName = '';
   form: StaffPayload = this.emptyForm();
+  designations: Array<{ id: string; name: string; is_active: boolean }> = [];
+  quickDesignationName = '';
+  readonly quickAddDesignationValue = '__quick_add_designation__';
   searchTerm = '';
   page = 1;
   pageSize = 10;
   sortColumn: keyof Staff = 'first_name';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private readonly service: StaffService, private readonly modal: NgbModal) {}
-  ngOnInit(): void { this.load(); }
+  constructor(private readonly service: StaffService, private readonly modal: NgbModal, private readonly offcanvas: NgbOffcanvas, private readonly http: HttpClient) {}
+  ngOnInit(): void { this.load(); this.loadDesignations(); }
   get isDriver(): boolean { return this.form.designation === 'DRIVER'; }
   get fullName(): string { return this.editing ? `${this.editing.first_name} ${this.editing.last_name}` : 'New Staff Member'; }
 
@@ -30,6 +35,9 @@ export class StaffComponent {
     this.modal.open(this.staffModal, { size: 'lg', centered: true, backdrop: 'static' });
   }
   onDesignationChange(): void { if (!this.isDriver) { this.form.permit_number = null; this.form.permit_expiry_date = null; } }
+  loadDesignations(): void { this.http.get<any>(`${environment.apiUrl}/staff-designations`).subscribe({ next: response => this.designations = response.data.filter((item: any) => item.is_active) }); }
+  onDesignationSelected(value: string, panel: TemplateRef<unknown>): void { if (value !== this.quickAddDesignationValue) { this.onDesignationChange(); return; } this.form.designation = ''; this.quickDesignationName = ''; this.offcanvas.open(panel, { position: 'end', backdrop: false, panelClass: 'custom-subscription-offcanvas' }); }
+  saveQuickDesignation(ref: any): void { const name = this.quickDesignationName.trim(); if (!name) return; this.http.post<any>(`${environment.apiUrl}/staff-designations`, { name, is_active: true }).subscribe({ next: response => { const designation = response.data[0]; this.designations = [...this.designations, designation]; this.form.designation = designation.name; ref.close(); void Swal.fire('Added', 'Designation added successfully.', 'success'); }, error: error => void Swal.fire('Save failed', error?.error?.message ?? 'Designation could not be added.', 'error') }); }
   onAttachment(event: Event): void { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 5 * 1024 * 1024) { void Swal.fire('Attachment too large', 'Choose a file up to 5 MB.', 'warning'); return; } const reader = new FileReader(); reader.onload = () => { this.form.attachment_data = String(reader.result); this.form.attachment_name = file.name; this.selectedAttachmentName = file.name; }; reader.readAsDataURL(file); }
   save(modal: { close: () => void }): void {
     const payload: StaffPayload = {

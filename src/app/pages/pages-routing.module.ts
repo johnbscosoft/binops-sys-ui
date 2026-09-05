@@ -13,6 +13,10 @@ import { CollectionSetupComponent } from './collection-setup/collection-setup.co
 // import { BlankPageComponent } from './blank-page/blank-page.component'; // Restore with placeholder routes when their modules are implemented.
 import { StaffComponent } from './staff/staff.component';
 import { VehiclesComponent } from './vehicles/vehicles.component';
+import { StaffDesignationsComponent } from './staff-designations/staff-designations.component';
+import { SchedulesComponent } from './schedules/schedules.component';
+import { DailyJobsComponent } from './daily-jobs/daily-jobs.component';
+import { TodaysPickupsComponent } from './todays-pickups/todays-pickups.component';
 
 const routes: Routes = [
     {
@@ -51,14 +55,16 @@ const routes: Routes = [
     },
     // Waste Collection placeholders retained in source but not exposed until implemented.
     // { path: 'collections/dashboard', component: BlankPageComponent },
-    // { path: 'collections/daily-jobs', component: BlankPageComponent },
-    // { path: 'collections/schedules', component: BlankPageComponent },
+    { path: 'collections/daily-jobs', component: DailyJobsComponent },
+    { path: 'collections/todays-pickups', component: TodaysPickupsComponent },
+    { path: 'collections/schedules', component: SchedulesComponent },
     { path: 'collections/fleet-crew', component: VehiclesComponent },
     // { path: 'collections/missed-collections', component: BlankPageComponent },
     // { path: 'collections/reports', component: BlankPageComponent },
     { path: 'vehicles/list', component: VehiclesComponent },
     { path: 'staff/management', component: StaffComponent },
     { path: 'staff/drivers', component: StaffComponent },
+    { path: 'administration/designations', component: StaffDesignationsComponent },
     {
       path: 'administration/company-settings',
       component: CompanySettingsComponent

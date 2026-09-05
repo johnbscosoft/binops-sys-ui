@@ -63,8 +63,9 @@ export const MENU: MenuItem[] = [
     ['Vehicles & Drivers', 'fleet-crew'],
     // Not yet implemented:
     // ['Dashboard', 'dashboard'],
-    // ['Daily Jobs', 'daily-jobs'],
-    // ['Schedules', 'schedules'],
+    ['Daily Jobs', 'daily-jobs'],
+    ['Today’s Pickups', 'todays-pickups'],
+    ['Schedules', 'schedules'],
     // ['Missed Collections', 'missed-collections'],
     // ['Reports', 'reports'],
   ]),
@@ -107,6 +108,7 @@ export const MENU: MenuItem[] = [
     // ['Roles & Permissions', 'roles-permissions'],
     ['Company Settings', 'company-settings'],
     ['Client Categories', 'client-categories'],
+    ['Designations', 'designations'],
     ['Authentication Settings', 'authentication-settings'],
     // ['System Settings', 'system-settings'],
     // ['Audit Logs', 'audit-logs']

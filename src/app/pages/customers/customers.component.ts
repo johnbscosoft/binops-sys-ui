@@ -29,6 +29,7 @@ import {
   PropertyService,
   PropertyUnit
 } from '../properties/property.service';
+import { CollectionRoute, CollectionService } from '../collection-setup/collection.service';
 
 type ServiceArrangement = 'LANDLORD' | 'DIRECT_TENANT';
 type RoomPricingMode = 'SHARED' | 'PER_ROOM';
@@ -129,6 +130,9 @@ export class CustomersComponent implements OnInit {
   editingCustomer: Client | null = null;
   selectedCustomer: Client | null = null;
   selectedQrCustomer: Client | null = null;
+  routeCustomer: Client | null = null;
+  selectedRouteId = '';
+  collectionRoutes: CollectionRoute[] = [];
   customerQrCodeDataUrl = '';
   isGeneratingCustomerQr = false;
   customerForm: ClientForm = this.emptyForm();
@@ -167,7 +171,8 @@ export class CustomersComponent implements OnInit {
     private readonly clientCategoryService: ClientCategoryService,
     private readonly authenticationSettingsService: AuthenticationSettingsService,
     private readonly propertyService: PropertyService,
-    private readonly customerService: CustomerService
+    private readonly customerService: CustomerService,
+    private readonly collectionService: CollectionService
   ) {}
 
   ngOnInit(): void {
@@ -177,6 +182,7 @@ export class CustomersComponent implements OnInit {
     this.loadClientCategories();
     this.loadProperties();
     this.loadGoogleLocationPreference();
+    this.collectionService.listRoutes().subscribe({ next: response => this.collectionRoutes = response.data });
   }
 
   private loadGoogleLocationPreference(): void {
@@ -1586,6 +1592,9 @@ export class CustomersComponent implements OnInit {
     return (firstFrequency < 0 ? frequencyOrder.length : firstFrequency)
       - (secondFrequency < 0 ? frequencyOrder.length : secondFrequency);
   }
+
+  openAddRoute(content: TemplateRef<unknown>, customer: Client): void { this.routeCustomer = customer; this.selectedRouteId = ''; this.modalService.open(content, { centered: true }); }
+  saveCustomerRoute(modal: { close: () => void }): void { if (!this.routeCustomer || !this.selectedRouteId) return; this.customerService.assignRoute(this.routeCustomer.id, this.selectedRouteId).subscribe({ next: () => { modal.close(); void Swal.fire('Route assigned', 'Customer route assigned successfully.', 'success'); }, error: error => void Swal.fire('Save failed', error?.error?.message ?? 'The route could not be assigned.', 'error') }); }
 
   private mapApiCustomer(customer: ApiCustomer): Client {
     return {

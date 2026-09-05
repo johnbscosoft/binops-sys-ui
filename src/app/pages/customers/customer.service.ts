@@ -36,6 +36,7 @@ export interface ApiCustomer {
   status: 'Active' | 'Inactive';
   date_entered: string;
   date_updated: string | null;
+  collection_route_id?: string | null;
 }
 
 export interface ApiCustomerRoom {
@@ -105,4 +106,6 @@ export class CustomerService {
   delete(customerId: number): Observable<ApiResponse<never>> {
     return this.http.delete<ApiResponse<never>>(`${this.endpoint}/${customerId}`);
   }
+
+  assignRoute(customerId: number, routeId: string): Observable<ApiResponse<ApiCustomer>> { return this.http.put<ApiResponse<ApiCustomer>>(`${this.endpoint}/${customerId}/route`, { route_id: routeId }); }
 }

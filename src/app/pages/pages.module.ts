@@ -40,10 +40,14 @@ import { CollectionSetupComponent } from './collection-setup/collection-setup.co
 // import { BlankPageComponent } from './blank-page/blank-page.component'; // Used by future placeholder-only routes.
 import { StaffComponent } from './staff/staff.component';
 import { VehiclesComponent } from './vehicles/vehicles.component';
+import { StaffDesignationsComponent } from './staff-designations/staff-designations.component';
+import { SchedulesComponent } from './schedules/schedules.component';
+import { DailyJobsComponent } from './daily-jobs/daily-jobs.component';
+import { TodaysPickupsComponent } from './todays-pickups/todays-pickups.component';
 
 
 @NgModule({
-  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent, CollectionSetupComponent, StaffComponent, VehiclesComponent],
+  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent, CollectionSetupComponent, StaffComponent, VehiclesComponent, StaffDesignationsComponent, SchedulesComponent, DailyJobsComponent, TodaysPickupsComponent],
   imports: [
     CommonModule,
     FormsModule,
