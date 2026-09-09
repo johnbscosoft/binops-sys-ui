@@ -197,6 +197,10 @@ export class CompanySettingsComponent implements OnInit {
     if (this.logoError) {
       return;
     }
+    if (!/^\d{10}$/.test(this.companyForm.phone_number.trim())) {
+      void Swal.fire('Invalid phone number', 'Phone number must contain exactly 10 digits.', 'warning');
+      return;
+    }
 
     const payload: CompanyPayload = {
       name: this.companyForm.name.trim(),
@@ -239,6 +243,7 @@ export class CompanySettingsComponent implements OnInit {
       }
     });
   }
+  digitsOnly(value: string): string { return value.replace(/\D/g, '').slice(0, 10); }
 
   async deleteCompany(company: Company): Promise<void> {
     const confirmation = await Swal.fire({

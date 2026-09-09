@@ -178,11 +178,13 @@
             [(ngModel)]="companyForm.phone_number"
             #phoneControl="ngModel"
             required
-            minlength="3"
-            maxlength="12"
+            inputmode="numeric"
+            maxlength="10"
+            pattern="[0-9]{10}"
+            (ngModelChange)="companyForm.phone_number = digitsOnly($event)"
             [class.is-invalid]="phoneControl.invalid && phoneControl.touched">
           @if (phoneControl.invalid && phoneControl.touched) {
-            <div class="invalid-feedback">Enter a phone number between 3 and 12 characters.</div>
+            <div class="invalid-feedback">Enter exactly 10 digits.</div>
           }
         </div>
 
