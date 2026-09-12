@@ -59,7 +59,7 @@ export class StaffComponent {
       date_of_birth: this.form.date_of_birth || null,
     };
     const request = this.editing ? this.service.update(this.editing.id, payload) : this.service.create(payload);
-    request.subscribe({ next: () => { modal.close(); this.load(); void Swal.fire('Saved', 'Staff member saved successfully.', 'success'); }, error: e => void Swal.fire('Save failed', e?.error?.message ?? 'The staff record could not be saved.', 'error') });
+    request.subscribe({ next: () => { modal.close(); this.load(); void Swal.fire('Saved', 'Staff member saved successfully.', 'success'); }, error: e => void Swal.fire('Save failed', this.apiErrorMessage(e), 'error') });
   }
   markInteracted(field: string): void { this.interacted[field] = true; }
   isInvalid(field: 'first_name' | 'last_name' | 'designation'): boolean { return (this.submitted || this.interacted[field]) && !String(this.form[field] ?? '').trim(); }
@@ -101,4 +101,5 @@ export class StaffComponent {
   private emptyForm(): StaffPayload { return { first_name: '', last_name: '', employment_date: null, designation: 'COLLECTOR', phone_number: null, residence: null, permit_number: null, permit_expiry_date: null, date_of_birth: null, gender: null, attachment_name: null, attachment_data: null, status: 'Active' }; }
   onPhoneChange(value: string | null): void { this.markInteracted('phone_number'); this.form.phone_number = (value ?? '').replace(/\D/g, '').slice(0, 10); }
   onPermitChange(value: string | null): void { this.markInteracted('permit_number'); this.form.permit_number = (value ?? '').replace(/\D/g, '').slice(0, 8); }
+  private apiErrorMessage(error: any): string { return error?.error?.message ?? error?.error?.detail ?? error?.message ?? 'The staff record could not be saved.'; }
 }
