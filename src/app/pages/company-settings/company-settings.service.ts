@@ -11,6 +11,7 @@ export interface Company {
   email: string;
   contact_person: string;
   phone_number: string;
+  address: string | null;
   logo: string | null;
   created_at: string;
   updated_at: string;
@@ -18,7 +19,7 @@ export interface Company {
 
 export type CompanyPayload = Pick<
   Company,
-  'name' | 'email' | 'contact_person' | 'phone_number' | 'logo'
+  'name' | 'email' | 'contact_person' | 'phone_number' | 'address' | 'logo'
 >;
 
 interface ApiResponse<T> {

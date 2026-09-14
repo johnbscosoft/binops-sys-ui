@@ -1,0 +1,8 @@
+.invoice-settings-card {
+  .nav-tabs-custom .nav-link { padding: 1rem 1.5rem; font-weight: 600; color: #405189; }
+  .company-information-tab { order: -1; }
+  .tab-pane-content { min-height: 330px; padding: 2rem; }
+}
+
+.company-logo { max-width: 132px; max-height: 132px; object-fit: contain; }
+.company-logo-placeholder { width: 100px; height: 100px; display: grid; place-items: center; border-radius: 50%; background: #f3f6f9; color: #405189; font-size: 2.5rem; }

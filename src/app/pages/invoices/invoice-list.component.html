@@ -1,0 +1,19 @@
+<app-breadcrumbs title="Invoices" [breadcrumbItems]="[{ label: 'Finance', active: true }, { label: 'Invoices', active: true }]"></app-breadcrumbs>
+
+<div class="card">
+  <div class="card-header border-0 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <div><h5 class="card-title mb-1">Invoices</h5><p class="text-muted mb-0">Create and review customer billing records.</p></div>
+    <div class="d-flex gap-2"><button class="btn btn-soft-primary" (click)="generateDrafts()"><i class="ri-file-add-line me-1"></i>Generate Drafts</button><button class="btn btn-success" (click)="create()"><i class="ri-add-line me-1"></i>Create Invoice</button></div>
+  </div>
+  <div class="card-body border-top border-top-dashed">
+    <div class="row g-2 mb-3">
+      <div class="col-md-6 col-lg-4"><div class="search-box"><input class="form-control search" [(ngModel)]="search" placeholder="Search invoice, customer or code"><i class="ri-search-line search-icon"></i></div></div>
+      <div class="col-md-4 col-lg-3"><select class="form-select" [(ngModel)]="status">@for (option of statuses; track option) { <option [value]="option">{{ option === 'All' ? 'All statuses' : option }}</option> }</select></div>
+    </div>
+    <div class="table-responsive"><table class="table table-nowrap align-middle mb-0"><thead class="table-light"><tr><th>Invoice #</th><th>Customer</th><th>Issue Date</th><th>Due Date</th><th class="text-end">Amount</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
+      @if (loading) { <tr><td colspan="7" class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Loading invoices…</td></tr> }
+      @for (item of filteredRecords; track item.id) { <tr><td><button class="btn btn-link p-0 fw-semibold" (click)="view(item)">{{ item.invoiceNumber }}</button></td><td><div class="fw-medium">{{ item.customer }}</div><small class="text-muted">{{ item.customerCode }}</small></td><td>{{ item.issueDate | date:'mediumDate' }}</td><td>{{ item.dueDate | date:'mediumDate' }}</td><td class="text-end">{{ item.currency }} {{ total(item) | number }}</td><td><span class="badge" [ngClass]="badge(item.status)">{{ item.status }}</span></td><td class="text-end"><div ngbDropdown container="body" placement="bottom-end"><button class="btn btn-sm btn-soft-secondary btn-icon arrow-none" ngbDropdownToggle aria-label="Open invoice actions"><i class="ri-more-2-fill"></i></button><div ngbDropdownMenu class="dropdown-menu-end"><button ngbDropdownItem (click)="view(item)"><i class="ri-eye-line text-primary me-2"></i>View Invoice</button><div class="dropdown-divider"></div><button ngbDropdownItem class="text-danger" (click)="remove(item)"><i class="ri-delete-bin-line me-2"></i>Delete</button></div></div></td></tr> }
+      @if (!loading && !filteredRecords.length) { <tr><td colspan="7" class="text-center text-muted py-5">No invoices match your search.</td></tr> }
+    </tbody></table></div>
+  </div>
+</div>

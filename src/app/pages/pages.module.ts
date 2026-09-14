@@ -44,10 +44,14 @@ import { StaffDesignationsComponent } from './staff-designations/staff-designati
 import { SchedulesComponent } from './schedules/schedules.component';
 import { DailyJobsComponent } from './daily-jobs/daily-jobs.component';
 import { TodaysPickupsComponent } from './todays-pickups/todays-pickups.component';
+import { InvoiceListComponent } from './invoices/invoice-list.component';
+import { InvoiceCreateComponent } from './invoices/invoice-create.component';
+import { InvoiceDetailsComponent } from './invoices/invoice-details.component';
+import { InvoiceSettingsComponent } from './invoices/invoice-settings.component';
 
 
 @NgModule({
-  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent, CollectionSetupComponent, StaffComponent, VehiclesComponent, StaffDesignationsComponent, SchedulesComponent, DailyJobsComponent, TodaysPickupsComponent],
+  declarations: [CustomersComponent, PropertiesComponent, CustomerReportsComponent, CompanySettingsComponent, SubscriptionsComponent, UsersComponent, ContractsComponent, AuthenticationSettingsComponent, ClientCategoriesComponent, CollectionSetupComponent, StaffComponent, VehiclesComponent, StaffDesignationsComponent, SchedulesComponent, DailyJobsComponent, TodaysPickupsComponent, InvoiceListComponent, InvoiceCreateComponent, InvoiceDetailsComponent, InvoiceSettingsComponent],
   imports: [
     CommonModule,
     FormsModule,

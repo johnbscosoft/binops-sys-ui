@@ -3,8 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export interface Vehicle { id: string; plate_number: string; model: string; driver_id: string | null; driver_name: string | null; status: 'Active' | 'Inactive'; created_at: string; }
-export type VehiclePayload = Pick<Vehicle, 'plate_number' | 'model' | 'driver_id' | 'status'>;
+export interface Vehicle { id: string; plate_number: string; model: string; chassis_number: string | null; vehicle_type: string | null; purchase_date: string | null; third_party_insurance_expiry: string | null; truck_photo_name: string | null; truck_photo_data: string | null; logbook_name: string | null; logbook_data: string | null; driver_id: string | null; driver_name: string | null; status: 'Active' | 'Inactive'; created_at: string; }
+export type VehiclePayload = Pick<Vehicle, 'plate_number' | 'model' | 'chassis_number' | 'vehicle_type' | 'purchase_date' | 'third_party_insurance_expiry' | 'truck_photo_name' | 'truck_photo_data' | 'logbook_name' | 'logbook_data' | 'driver_id' | 'status'>;
 interface ApiResponse<T> { status: boolean; message: string; data: T; }
 @Injectable({ providedIn: 'root' })
 export class VehicleService {

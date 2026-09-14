@@ -23,7 +23,8 @@ compose.test.yaml          Test-environment Compose deployment
 - Use SweetAlert2 for success, error, warning, confirmation, and delete messages; do not introduce browser `alert()` or `confirm()`.
 - Mark required form fields with a red asterisk and keep client-side validation aligned with the API schema.
 - Phone number fields must accept digits only and require exactly 10 digits. Use `inputmode="numeric"`, `maxlength="10"`, a 10-digit pattern, inline validation, and sanitize pasted non-digit characters.
-- Use the existing horizontal action dropdown pattern in data tables.
+- Every form submission must lock the full form while its request is pending, disable cancel/close and submit controls, and replace the submit label with an inline loading spinner. Always restore the form on API error; only close it after success.
+- Use the horizontal three-dot (`ri-more-2-fill`) icon dropdown for every data-table actions column; do not use text action buttons. Place it at the right and use `placement="bottom-end"`.
 - Keep forms responsive, scrollable inside modals, and accessible with labels and keyboard actions.
 - Reuse existing services and environment API URLs. Do not hard-code production hosts in components.
 - Preserve existing user changes and avoid unrelated formatting rewrites.

@@ -22,6 +22,7 @@ export class StaffComponent {
   sortColumn: keyof Staff = 'first_name';
   sortDirection: 'asc' | 'desc' = 'asc';
   submitted = false;
+  saving = false;
   interacted: Record<string, boolean> = {};
 
   constructor(private readonly service: StaffService, private readonly modal: NgbModal, private readonly offcanvas: NgbOffcanvas, private readonly http: HttpClient) {}
@@ -32,6 +33,7 @@ export class StaffComponent {
   load(): void { this.loading = true; this.service.list().subscribe({ next: r => { this.staff = r.data; this.page = 1; this.loading = false; }, error: () => { this.loading = false; void Swal.fire('Unable to load staff', 'Staff records could not be loaded.', 'error'); } }); }
   open(item?: Staff): void {
     this.submitted = false;
+    this.saving = false;
     this.interacted = {};
     this.editing = item ?? null;
     this.form = item ? { first_name: item.first_name, last_name: item.last_name, employment_date: item.employment_date, designation: item.designation, phone_number: item.phone_number, residence: item.residence, permit_number: item.permit_number, permit_expiry_date: item.permit_expiry_date, date_of_birth: item.date_of_birth, gender: item.gender, attachment_name: item.attachment_name, attachment_data: item.attachment_data, status: item.status } : this.emptyForm();
@@ -58,15 +60,18 @@ export class StaffComponent {
       permit_expiry_date: this.form.permit_expiry_date || null,
       date_of_birth: this.form.date_of_birth || null,
     };
+    this.saving = true;
     const request = this.editing ? this.service.update(this.editing.id, payload) : this.service.create(payload);
-    request.subscribe({ next: () => { modal.close(); this.load(); void Swal.fire('Saved', 'Staff member saved successfully.', 'success'); }, error: e => void Swal.fire('Save failed', this.apiErrorMessage(e), 'error') });
+    request.subscribe({ next: () => { this.saving = false; modal.close(); this.load(); void Swal.fire('Saved', 'Staff member saved successfully.', 'success'); }, error: e => { this.saving = false; void Swal.fire('Save failed', this.apiErrorMessage(e), 'error'); } });
   }
   markInteracted(field: string): void { this.interacted[field] = true; }
   isInvalid(field: 'first_name' | 'last_name' | 'designation'): boolean { return (this.submitted || this.interacted[field]) && !String(this.form[field] ?? '').trim(); }
   fieldError(field: 'phone_number' | 'employment_date' | 'date_of_birth' | 'permit_number' | 'permit_expiry_date'): string | null {
     if (!this.submitted && !this.interacted[field]) return null;
     const today = new Date().toISOString().slice(0, 10);
-    if (field === 'phone_number' && this.form.phone_number?.trim() && !/^\d{10}$/.test(this.form.phone_number.trim())) return 'Phone number must contain exactly 10 digits.';
+    const phoneNumber = this.form.phone_number?.trim() ?? '';
+    if (field === 'phone_number' && !phoneNumber) return 'Phone number is required.';
+    if (field === 'phone_number' && !/^\d{10}$/.test(phoneNumber)) return 'Phone number must contain exactly 10 digits.';
     if (field === 'employment_date' && this.form.employment_date && this.form.employment_date > today) return 'Employment date cannot be in the future.';
     if (field === 'date_of_birth' && this.form.date_of_birth && this.form.date_of_birth >= today) return 'Date of birth must be in the past.';
     if (field === 'permit_number' && this.form.permit_number?.trim() && !/^\d{8}$/.test(this.form.permit_number.trim())) return 'Driving permit number must contain exactly 8 digits.';
@@ -75,8 +80,8 @@ export class StaffComponent {
     return null;
   }
   private validateForm(): string | null {
-    if (!this.form.first_name.trim() || !this.form.last_name.trim() || !this.form.designation?.trim()) return 'First name, last name, and designation are required.';
-    if (this.form.phone_number?.trim() && !/^\d{10}$/.test(this.form.phone_number.trim())) return 'Phone number must contain exactly 10 digits.';
+    if (!this.form.first_name.trim() || !this.form.last_name.trim() || !this.form.designation?.trim() || !this.form.phone_number?.trim()) return 'First name, last name, designation, and phone number are required.';
+    if (!/^\d{10}$/.test(this.form.phone_number.trim())) return 'Phone number must contain exactly 10 digits.';
     const today = new Date().toISOString().slice(0, 10);
     if (this.form.date_of_birth && this.form.date_of_birth >= today) return 'Date of birth must be in the past.';
     if (this.form.employment_date && this.form.employment_date > today) return 'Date of employment cannot be in the future.';

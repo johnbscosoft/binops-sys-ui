@@ -206,6 +206,18 @@
         </div>
 
         <div class="col-12">
+          <label for="company-address" class="form-label">Address</label>
+          <textarea
+            id="company-address"
+            name="companyAddress"
+            class="form-control"
+            rows="3"
+            maxlength="500"
+            placeholder="e.g. Plot 12, Kampala Road, Kampala"
+            [(ngModel)]="companyForm.address"></textarea>
+        </div>
+
+        <div class="col-12">
           <label class="form-label">Company Logo</label>
           <input
             #logoInput

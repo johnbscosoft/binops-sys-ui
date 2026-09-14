@@ -70,11 +70,8 @@ export const MENU: MenuItem[] = [
     // ['Reports', 'reports'],
   ]),
   menu(50, 'Finance', 'ri-money-dollar-circle-line', '/finance', [
-    ['Payments', 'payments'],
     ['Invoices', 'invoices'],
-    ['Outstanding Balances', 'outstanding-balances'],
-    ['Revenue Tracking', 'revenue-tracking'],
-    ['Payment History', 'payment-history']
+    ['Invoice Settings', 'invoice-settings']
   ]),
   menu(60, 'Fleet Management', 'ri-truck-line', '/vehicles', [
     ['Vehicles', 'list'],
@@ -84,8 +81,7 @@ export const MENU: MenuItem[] = [
     // ['Driver Assignments', 'driver-assignments']
   ]),
   menu(70, 'Human Resource', 'ri-team-line', '/staff', [
-    ['Staff Management', 'management'],
-    ['Drivers', 'drivers'],
+    ['Staff Records', 'management'],
     // ['Attendance', 'attendance'],
     // ['Leave Management', 'leave-management']
   ]),

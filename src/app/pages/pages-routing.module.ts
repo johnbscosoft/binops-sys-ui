@@ -17,6 +17,10 @@ import { StaffDesignationsComponent } from './staff-designations/staff-designati
 import { SchedulesComponent } from './schedules/schedules.component';
 import { DailyJobsComponent } from './daily-jobs/daily-jobs.component';
 import { TodaysPickupsComponent } from './todays-pickups/todays-pickups.component';
+import { InvoiceListComponent } from './invoices/invoice-list.component';
+import { InvoiceCreateComponent } from './invoices/invoice-create.component';
+import { InvoiceDetailsComponent } from './invoices/invoice-details.component';
+import { InvoiceSettingsComponent } from './invoices/invoice-settings.component';
 
 const routes: Routes = [
     {
@@ -65,6 +69,10 @@ const routes: Routes = [
     { path: 'staff/management', component: StaffComponent },
     { path: 'staff/drivers', component: StaffComponent },
     { path: 'administration/designations', component: StaffDesignationsComponent },
+    { path: 'finance/invoices', component: InvoiceListComponent },
+    { path: 'finance/invoices/create', component: InvoiceCreateComponent },
+    { path: 'finance/invoice-settings', component: InvoiceSettingsComponent },
+    { path: 'finance/invoices/:id', component: InvoiceDetailsComponent },
     {
       path: 'administration/company-settings',
       component: CompanySettingsComponent

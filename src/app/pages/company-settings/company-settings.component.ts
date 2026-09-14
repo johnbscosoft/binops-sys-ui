@@ -99,6 +99,7 @@ export class CompanySettingsComponent implements OnInit {
       email: company.email,
       contact_person: company.contact_person,
       phone_number: company.phone_number,
+      address: company.address,
       logo: company.logo
     };
     this.logoError = '';
@@ -207,6 +208,7 @@ export class CompanySettingsComponent implements OnInit {
       email: this.companyForm.email.trim(),
       contact_person: this.companyForm.contact_person.trim(),
       phone_number: this.companyForm.phone_number.trim(),
+      address: this.companyForm.address?.trim() || null,
       logo: this.companyForm.logo?.trim() || null
     };
 
@@ -293,6 +295,7 @@ export class CompanySettingsComponent implements OnInit {
       email: '',
       contact_person: '',
       phone_number: '',
+      address: null,
       logo: null
     };
   }
