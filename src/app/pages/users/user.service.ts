@@ -85,10 +85,11 @@ export class UserService {
     return this.http.patch<ApiResponse<ApiUser>>(`${this.endpoint}/${userId}`, payload);
   }
 
-  updateStatus(userId: string, isActive: boolean): Observable<ApiResponse<ApiUser>> {
-    return this.http.patch<ApiResponse<ApiUser>>(`${this.endpoint}/${userId}/status`, {
-      is_active: isActive
-    });
+  updateStatus(userId: string, isActive?: boolean, isSuperuser?: boolean): Observable<ApiResponse<ApiUser>> {
+    const payload: Record<string, boolean> = {};
+    if (isActive !== undefined) payload['is_active'] = isActive;
+    if (isSuperuser !== undefined) payload['is_superuser'] = isSuperuser;
+    return this.http.patch<ApiResponse<ApiUser>>(`${this.endpoint}/${userId}/status`, payload);
   }
 
   delete(userId: string): Observable<ApiResponse<never>> {

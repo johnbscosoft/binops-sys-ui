@@ -218,6 +218,25 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  async toggleSuperuser(user: ApiUser): Promise<void> {
+    const makeSuperuser = !user.is_superuser;
+    const result = await Swal.fire({
+      title: makeSuperuser ? 'Make user a superuser?' : 'Remove superuser access?',
+      text: makeSuperuser
+        ? `${this.displayName(user)} will be able to manage users and other protected settings.`
+        : `${this.displayName(user)} will lose superuser-only access.`,
+      icon: 'warning', showCancelButton: true,
+      confirmButtonText: makeSuperuser ? 'Make Superuser' : 'Remove Access',
+      confirmButtonColor: makeSuperuser ? '#0ab39c' : '#f7b84b', cancelButtonColor: '#74788d', reverseButtons: true
+    });
+    if (!result.isConfirmed) return;
+    this.actionUserId = user.id;
+    this.userService.updateStatus(user.id, undefined, makeSuperuser).subscribe({
+      next: () => { this.actionUserId = ''; this.loadUsers(); void Swal.fire('Access updated', `${this.displayName(user)} is ${makeSuperuser ? 'now' : 'no longer'} a superuser.`, 'success'); },
+      error: error => { this.actionUserId = ''; void Swal.fire('Access update failed', error.error?.message ?? 'Superuser access could not be updated.', 'error'); }
+    });
+  }
+
   async deleteUser(user: ApiUser): Promise<void> {
     const result = await Swal.fire({
       title: 'Delete user?',

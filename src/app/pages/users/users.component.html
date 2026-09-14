@@ -83,6 +83,13 @@
                     </button>
                     <button
                       type="button"
+                      class="btn btn-sm btn-soft-info"
+                      [disabled]="user.id === currentUserId || actionUserId === user.id"
+                      (click)="toggleSuperuser(user)">
+                      <i class="ri-shield-star-line me-1"></i>{{ user.is_superuser ? 'Remove Superuser' : 'Make Superuser' }}
+                    </button>
+                    <button
+                      type="button"
                       class="btn btn-sm btn-soft-warning"
                       [disabled]="user.id === currentUserId || actionUserId === user.id"
                       (click)="toggleStatus(user)">
