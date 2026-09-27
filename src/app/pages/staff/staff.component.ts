@@ -36,7 +36,7 @@ export class StaffComponent {
     this.saving = false;
     this.interacted = {};
     this.editing = item ?? null;
-    this.form = item ? { first_name: item.first_name, last_name: item.last_name, employment_date: item.employment_date, designation: item.designation, phone_number: item.phone_number, residence: item.residence, permit_number: item.permit_number, permit_expiry_date: item.permit_expiry_date, date_of_birth: item.date_of_birth, gender: item.gender, attachment_name: item.attachment_name, attachment_data: item.attachment_data, status: item.status } : this.emptyForm();
+    this.form = item ? { first_name: item.first_name, last_name: item.last_name, employment_date: item.employment_date, designation: item.designation, phone_number: item.phone_number, nin: item.nin, residence: item.residence, permit_number: item.permit_number, permit_expiry_date: item.permit_expiry_date, date_of_birth: item.date_of_birth, gender: item.gender, attachment_name: item.attachment_name, attachment_data: item.attachment_data, status: item.status } : this.emptyForm();
     this.selectedAttachmentName = this.form.attachment_name ?? '';
     this.modal.open(this.staffModal, { size: 'lg', centered: true, backdrop: 'static' });
   }
@@ -55,6 +55,7 @@ export class StaffComponent {
       last_name: this.form.last_name.trim(),
       employment_date: this.form.employment_date || null,
       phone_number: this.form.phone_number?.trim() || null,
+      nin: this.form.nin?.trim().toUpperCase() || null,
       residence: this.form.residence?.trim() || null,
       permit_number: this.form.permit_number?.trim() || null,
       permit_expiry_date: this.form.permit_expiry_date || null,
@@ -93,7 +94,7 @@ export class StaffComponent {
   async remove(item: Staff): Promise<void> { const result = await Swal.fire({ title: `Delete ${item.first_name}?`, text: 'This staff record will be permanently removed.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete', confirmButtonColor: '#f06548' }); if (result.isConfirmed) this.service.delete(item.id).subscribe({ next: () => { this.load(); void Swal.fire('Deleted', 'Staff member deleted.', 'success'); }, error: e => void Swal.fire('Delete failed', e?.error?.message ?? 'The record could not be deleted.', 'error') }); }
   get filteredStaff(): Staff[] {
     const query = this.searchTerm.trim().toLowerCase();
-    const result = !query ? [...this.staff] : this.staff.filter(item => [item.first_name, item.last_name, item.designation, item.phone_number, item.residence, item.permit_number, item.status].some(value => String(value ?? '').toLowerCase().includes(query)));
+    const result = !query ? [...this.staff] : this.staff.filter(item => [item.first_name, item.last_name, item.designation, item.phone_number, item.nin, item.residence, item.permit_number, item.status].some(value => String(value ?? '').toLowerCase().includes(query)));
     return result.sort((left, right) => this.compare(left[this.sortColumn], right[this.sortColumn]));
   }
   get paginatedStaff(): Staff[] { const start = (this.page - 1) * this.pageSize; return this.filteredStaff.slice(start, start + this.pageSize); }
@@ -103,7 +104,7 @@ export class StaffComponent {
   sortBy(column: keyof Staff): void { if (this.sortColumn === column) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'; else { this.sortColumn = column; this.sortDirection = 'asc'; } this.page = 1; }
   sortIcon(column: keyof Staff): string { return this.sortColumn !== column ? 'ri-expand-up-down-line' : this.sortDirection === 'asc' ? 'ri-arrow-up-line' : 'ri-arrow-down-line'; }
   private compare(left: unknown, right: unknown): number { const first = String(left ?? '').toLowerCase(); const second = String(right ?? '').toLowerCase(); const comparison = first.localeCompare(second, undefined, { numeric: true }); return this.sortDirection === 'asc' ? comparison : -comparison; }
-  private emptyForm(): StaffPayload { return { first_name: '', last_name: '', employment_date: null, designation: 'COLLECTOR', phone_number: null, residence: null, permit_number: null, permit_expiry_date: null, date_of_birth: null, gender: null, attachment_name: null, attachment_data: null, status: 'Active' }; }
+  private emptyForm(): StaffPayload { return { first_name: '', last_name: '', employment_date: null, designation: 'COLLECTOR', phone_number: null, nin: null, residence: null, permit_number: null, permit_expiry_date: null, date_of_birth: null, gender: null, attachment_name: null, attachment_data: null, status: 'Active' }; }
   onPhoneChange(value: string | null): void { this.markInteracted('phone_number'); this.form.phone_number = (value ?? '').replace(/\D/g, '').slice(0, 10); }
   onPermitChange(value: string | null): void { this.markInteracted('permit_number'); this.form.permit_number = (value ?? '').replace(/\D/g, '').slice(0, 8); }
   private apiErrorMessage(error: any): string { return error?.error?.message ?? error?.error?.detail ?? error?.message ?? 'The staff record could not be saved.'; }
